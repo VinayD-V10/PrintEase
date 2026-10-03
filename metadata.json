@@ -1,0 +1,6 @@
+{
+  "name": "PrintEase - Online Xerox & Document Printing Service",
+  "description": "Upload, configure printing options, lock prices, pay securely, and pick up verified Xerox and document prints at the shop.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
