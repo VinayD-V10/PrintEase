@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>PrintEase - Redirecting...</title>
+    <script>
+      // Single Page App redirect for GitHub Pages (rafgraph SPA pattern)
+      sessionStorage.setItem('spa_redirect', window.location.href);
+      // Determine root repo path if applicable
+      var pathSegments = window.location.pathname.split('/').filter(Boolean);
+      // If deployed on github.io/repo-name/
+      var base = window.location.hostname.indexOf('github.io') !== -1 && pathSegments.length > 0
+        ? '/' + pathSegments[0] + '/'
+        : '/';
+      window.location.replace(base);
+    </script>
+  </head>
+  <body style="background: #FFF5E1; color: #422C09; font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0;">
+    <p>Redirecting to PrintEase...</p>
+  </body>
+</html>

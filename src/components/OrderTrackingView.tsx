@@ -18,12 +18,14 @@ import { StatusBlinkDot } from './StatusBlinkDot';
 
 interface Props {
   initialOrderId?: string;
+  orders?: Order[];
   onViewReceipt: (order: Order) => void;
   onBackToHome: () => void;
 }
 
 export const OrderTrackingView: React.FC<Props> = ({
   initialOrderId = '',
+  orders = [],
   onViewReceipt,
   onBackToHome,
 }) => {
@@ -33,22 +35,34 @@ export const OrderTrackingView: React.FC<Props> = ({
   const [error, setError] = useState<string | null>(null);
 
   const fetchOrder = async (id: string) => {
-    if (!id.trim()) return;
+    const cleanId = id.trim();
+    if (!cleanId) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/orders/${encodeURIComponent(id.trim())}`);
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Order not found. Please verify the Order ID.');
+      const res = await fetch(`/api/orders/${encodeURIComponent(cleanId)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.order) {
+          setOrder(data.order);
+          setLoading(false);
+          return;
+        }
       }
-      setOrder(data.order);
-    } catch (err: any) {
-      setError(err.message || 'Unable to find order.');
+    } catch {}
+
+    // Offline / GitHub Pages local fallback search
+    const found = orders.find(
+      (o) => o.order_id.toLowerCase() === cleanId.toLowerCase() || o.id.toLowerCase() === cleanId.toLowerCase()
+    );
+    if (found) {
+      setOrder(found);
+      setError(null);
+    } else {
+      setError(`Order #${cleanId} not found. Please verify the Order ID (e.g. PE48291).`);
       setOrder(null);
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   useEffect(() => {

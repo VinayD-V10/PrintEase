@@ -41,6 +41,17 @@ import {
   Wallet,
   WalletTransaction,
 } from './types/printease';
+import {
+  getClientStoredOrders,
+  saveClientStoredOrders,
+  getClientStoredShopStatus,
+  saveClientStoredShopStatus,
+  getClientStoredWallet,
+  saveClientStoredWallet,
+  getClientStoredWalletTxs,
+  saveClientStoredWalletTxs,
+  DEFAULT_PRICING,
+} from './data/mockData';
 import { playOrderAlertSound } from './utils/audio';
 import {
   Home,
@@ -62,18 +73,6 @@ import {
   FileCode,
   Wallet as WalletIcon,
 } from 'lucide-react';
-
-const DEFAULT_PRICING: PricingSettings = {
-  a4_bw: 1.0,
-  a4_color: 5.0,
-  a3_bw: 3.0,
-  a3_color: 10.0,
-  spiral_binding: 30.0,
-  stapling: 5.0,
-  lamination: 10.0,
-  urgent_fee: 20.0,
-  delivery_fee: 40.0,
-};
 
 // Helper: Local storage for acknowledged pickup alerts so they NEVER repeat
 const getStoredAcknowledgedPickups = (): Set<string> => {
@@ -126,16 +125,16 @@ export default function App() {
   // Shopkeeper sub-tabs
   const [shopkeeperTab, setShopkeeperTab] = useState<ShopkeeperTab>('queue');
 
-  // Shop Open / Closed Status
-  const [shopStatus, setShopStatus] = useState<ShopStatusInfo | null>(null);
+  // Shop Open / Closed Status with client storage fallback
+  const [shopStatus, setShopStatus] = useState<ShopStatusInfo>(getClientStoredShopStatus);
 
-  // User Wallet & Transactions
-  const [wallet, setWallet] = useState<Wallet | null>(null);
-  const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>([]);
+  // User Wallet & Transactions with client storage fallback
+  const [wallet, setWallet] = useState<Wallet>(getClientStoredWallet);
+  const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>(getClientStoredWalletTxs);
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [pricing, setPricing] = useState<PricingSettings>(DEFAULT_PRICING);
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<Order[]>(getClientStoredOrders);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   // Modals
@@ -154,12 +153,15 @@ export default function App() {
   const fetchShopStatus = async () => {
     try {
       const res = await fetch('/api/shop-status');
-      const data = await res.json();
-      if (data && data.status) {
-        setShopStatus(data);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.status) {
+          setShopStatus(data);
+          saveClientStoredShopStatus(data);
+        }
       }
     } catch (e) {
-      console.warn('Failed to fetch shop status:', e);
+      console.warn('Shop status offline mode active:', e);
     }
   };
 
@@ -172,13 +174,19 @@ export default function App() {
 
       const userIdParam = currentUser?.id || 'usr_student_01';
       const res = await fetch(`/api/wallet?user_id=${encodeURIComponent(userIdParam)}`, { headers });
-      const data = await res.json();
-      if (data.wallet) {
-        setWallet(data.wallet);
-        setWalletTransactions(data.transactions || []);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.wallet) {
+          setWallet(data.wallet);
+          saveClientStoredWallet(data.wallet);
+          if (data.transactions) {
+            setWalletTransactions(data.transactions);
+            saveClientStoredWalletTxs(data.transactions);
+          }
+        }
       }
     } catch (e) {
-      console.warn('Failed to fetch wallet:', e);
+      console.warn('Wallet offline mode active:', e);
     }
   };
 
@@ -186,9 +194,9 @@ export default function App() {
   useEffect(() => {
     // Load pricing
     fetch('/api/pricing')
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (d.pricing) setPricing(d.pricing);
+        if (d && d.pricing) setPricing(d.pricing);
       })
       .catch((e) => console.warn('Pricing fetch error:', e));
 
@@ -238,41 +246,45 @@ export default function App() {
       const roleParam = portal === 'shopkeeper' ? 'owner' : 'customer';
 
       const [ordersRes, notifsRes] = await Promise.all([
-        fetch(orderUrl, { headers }),
-        fetch(`/api/notifications?role=${roleParam}&email=${encodeURIComponent(emailParam)}`),
+        fetch(orderUrl, { headers }).catch(() => null),
+        fetch(`/api/notifications?role=${roleParam}&email=${encodeURIComponent(emailParam)}`).catch(() => null),
       ]);
 
-      const ordersData = await ordersRes.json();
-      const notifsData = await notifsRes.json();
+      if (ordersRes && ordersRes.ok) {
+        const ordersData = await ordersRes.json();
+        if (ordersData.orders && ordersData.orders.length > 0) {
+          setOrders(ordersData.orders);
+          saveClientStoredOrders(ordersData.orders);
 
-      if (ordersData.orders) {
-        setOrders(ordersData.orders);
+          // SMART NON-INTRUSIVE PICKUP ALERT:
+          if (portal === 'customer') {
+            const acknowledged = getStoredAcknowledgedPickups();
+            const myPlaced = getMyPlacedOrderIds();
 
-        // SMART NON-INTRUSIVE PICKUP ALERT:
-        if (portal === 'customer') {
-          const acknowledged = getStoredAcknowledgedPickups();
-          const myPlaced = getMyPlacedOrderIds();
-
-          for (const ord of ordersData.orders) {
-            if (
-              ord.order_status === 'READY_FOR_PICKUP' &&
-              myPlaced.has(ord.order_id) &&
-              !acknowledged.has(ord.order_id)
-            ) {
-              setPickupAlertOrder(ord);
-              saveStoredAcknowledgedPickup(ord.order_id);
-              playOrderAlertSound();
-              break;
+            for (const ord of ordersData.orders) {
+              if (
+                ord.order_status === 'READY_FOR_PICKUP' &&
+                myPlaced.has(ord.order_id) &&
+                !acknowledged.has(ord.order_id)
+              ) {
+                setPickupAlertOrder(ord);
+                saveStoredAcknowledgedPickup(ord.order_id);
+                playOrderAlertSound();
+                break;
+              }
             }
           }
         }
       }
 
-      if (notifsData.notifications) {
-        setNotifications(notifsData.notifications);
+      if (notifsRes && notifsRes.ok) {
+        const notifsData = await notifsRes.json();
+        if (notifsData.notifications) {
+          setNotifications(notifsData.notifications);
+        }
       }
     } catch (err) {
-      console.warn('Poll error:', err);
+      console.warn('Poll error (offline mode active):', err);
     }
   };
 
@@ -318,36 +330,56 @@ export default function App() {
 
   // Update Shop Status Handler
   const handleUpdateShopStatus = async (updated: Partial<ShopStatusInfo>) => {
-    const token = localStorage.getItem('printease_token');
-    const res = await fetch('/api/shop-status', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify(updated),
+    try {
+      const token = localStorage.getItem('printease_token');
+      const res = await fetch('/api/shop-status', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(updated),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.shop_status) {
+          setShopStatus(data.shop_status);
+          saveClientStoredShopStatus(data.shop_status);
+          return;
+        }
+      }
+    } catch {}
+
+    // Offline / GitHub Pages local update
+    setShopStatus((prev) => {
+      const next = { ...prev, ...updated, last_updated: new Date().toISOString() };
+      saveClientStoredShopStatus(next);
+      return next;
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to update shop status');
-    if (data.shop_status) {
-      setShopStatus(data.shop_status);
-    }
   };
 
   // Pricing update handler for owner
   const handleUpdatePricing = async (newPricing: Partial<PricingSettings>) => {
-    const token = localStorage.getItem('printease_token');
-    const res = await fetch('/api/pricing', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify(newPricing),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to update rates');
-    setPricing(data.pricing);
+    try {
+      const token = localStorage.getItem('printease_token');
+      const res = await fetch('/api/pricing', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(newPricing),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.pricing) {
+          setPricing(data.pricing);
+          return;
+        }
+      }
+    } catch {}
+
+    setPricing((prev) => ({ ...prev, ...newPricing }));
   };
 
   // Mark notification read
@@ -461,6 +493,7 @@ export default function App() {
             {customerPage === 'track' && (
               <OrderTrackingView
                 initialOrderId={trackingOrderId}
+                orders={orders}
                 onViewReceipt={(ord) => setReceiptOrder(ord)}
                 onBackToHome={() => {
                   setCustomerPage('upload');
@@ -652,6 +685,11 @@ export default function App() {
             setPaymentOrder(null);
             registerMyPlacedOrder(paidOrder.order_id);
             setSuccessOrder(paidOrder);
+            setOrders((prev) => {
+              const updated = [paidOrder, ...prev.filter((o) => o.order_id !== paidOrder.order_id)];
+              saveClientStoredOrders(updated);
+              return updated;
+            });
             fetchOrdersAndNotifications();
             fetchWallet();
           }}
