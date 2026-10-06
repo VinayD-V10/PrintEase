@@ -383,13 +383,13 @@ export const UploadAndConfigure: React.FC<Props> = ({
       const finalTotal = Math.max(1, subtotal - discount);
 
       const randomNum = Math.floor(10000 + Math.random() * 90000);
-      const orderId = `PE${randomNum}`;
+      const draftId = `DRAFT-${randomNum}`;
       const pickupCode = Math.floor(1000 + Math.random() * 9000).toString();
       const sevenDaysLater = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
       const localOrder: Order = {
         id: `ord_${Date.now()}`,
-        order_id: orderId,
+        order_id: draftId,
         customer_name: customerName,
         customer_email: customerEmail,
         customer_phone: customerPhone,
@@ -1091,28 +1091,34 @@ export const UploadAndConfigure: React.FC<Props> = ({
 
           <div className="flex flex-col sm:flex-row items-center gap-3">
             {shopStatus && shopStatus.status === 'CLOSED' ? (
-              <div className="w-full sm:w-auto px-6 py-4 bg-rose-600/90 text-white font-extrabold text-sm sm:text-base rounded-xl shadow-lg shadow-rose-600/20 flex items-center justify-center gap-2 cursor-not-allowed">
+              <div className="w-full sm:w-auto px-6 py-4 bg-rose-600 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg shadow-rose-600/30 flex items-center justify-center gap-2 cursor-not-allowed">
                 <StatusBlinkDot isOpen={false} size="sm" />
-                <span>SHOP CLOSED — ORDERS PAUSED</span>
+                <span>Shop is Closed – Payment Unavailable</span>
               </div>
             ) : (
-              <button
-                type="submit"
-                disabled={submittingOrder || !uploadedFileData}
-                className="btn-smooth btn-dual-shimmer w-full sm:w-auto px-8 py-4 text-[#FFF5E1] font-extrabold text-base rounded-2xl shadow-xl shadow-[#422C09]/40 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-              >
-                {submittingOrder ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Freezing Price on Server...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Lock Price &amp; Review Order</span>
-                    <ArrowRight className="w-5 h-5 text-[#FFF5E1]" />
-                  </>
-                )}
-              </button>
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-[11px] font-bold">
+                  <StatusBlinkDot isOpen={true} size="sm" />
+                  <span>Shop is Open – Payment Available</span>
+                </div>
+                <button
+                  type="submit"
+                  disabled={submittingOrder || !uploadedFileData}
+                  className="btn-smooth btn-dual-shimmer w-full sm:w-auto px-8 py-4 text-[#FFF5E1] font-extrabold text-base rounded-2xl shadow-xl shadow-[#422C09]/40 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {submittingOrder ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Freezing Price on Server...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Lock Price &amp; Review Order</span>
+                      <ArrowRight className="w-5 h-5 text-[#FFF5E1]" />
+                    </>
+                  )}
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -1139,20 +1145,30 @@ export const UploadAndConfigure: React.FC<Props> = ({
               </span>
             </div>
 
-            <button
-              type="submit"
-              disabled={submittingOrder || !uploadedFileData || (shopStatus?.status === 'CLOSED')}
-              className="btn-smooth btn-dual-shimmer px-4 py-2 text-[#FFF5E1] text-xs font-black rounded-xl shadow-md flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
-            >
-              {submittingOrder ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <>
-                  <span>Review &amp; Lock</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </>
-              )}
-            </button>
+            {shopStatus?.status === 'CLOSED' ? (
+              <button
+                type="button"
+                disabled
+                className="px-3 py-2 bg-rose-600 text-white text-[10px] font-black rounded-xl cursor-not-allowed opacity-90 shadow-xs"
+              >
+                Shop is Closed – Payment Unavailable
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={submittingOrder || !uploadedFileData}
+                className="btn-smooth btn-dual-shimmer px-4 py-2 text-[#FFF5E1] text-xs font-black rounded-xl shadow-md flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
+              >
+                {submittingOrder ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <>
+                    <span>Review &amp; Lock</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </>
+                )}
+              </button>
+            )}
           </div>
         )}
       </form>

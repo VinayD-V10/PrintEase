@@ -211,6 +211,33 @@ export const OwnerDashboard: React.FC<Props> = ({
     }
   };
 
+  // Instant 1-click shop status toggle for owner
+  const handleQuickToggleShopStatus = async (targetStatus: 'OPEN' | 'CLOSED') => {
+    try {
+      if (onUpdateShopStatus) {
+        await onUpdateShopStatus({
+          status: targetStatus,
+          mode: targetStatus === 'OPEN' ? 'FORCE_OPEN' : 'FORCE_CLOSED',
+          message:
+            targetStatus === 'OPEN'
+              ? 'PrintEase is currently open and accepting orders.'
+              : 'PrintEase is currently closed. Orders and payments are paused.',
+        });
+      }
+      window.dispatchEvent(
+        new CustomEvent('printease_shop_status_changed', {
+          detail: {
+            ...shopStatus,
+            status: targetStatus,
+            mode: targetStatus === 'OPEN' ? 'FORCE_OPEN' : 'FORCE_CLOSED',
+          },
+        })
+      );
+    } catch (e) {
+      console.error('Failed to toggle shop status:', e);
+    }
+  };
+
   // Filtered orders
   const filteredOrders = orders.filter((o) => {
     if (filterStatus !== 'ALL') {
@@ -339,20 +366,22 @@ export const OwnerDashboard: React.FC<Props> = ({
               {shopStatus.status === 'OPEN' ? (
                 <button
                   type="button"
-                  onClick={() => setShowShopStatusModal(true)}
-                  className="px-5 py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border-2 border-rose-300 text-xs sm:text-sm font-black rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                  onClick={() => handleQuickToggleShopStatus('CLOSED')}
+                  className="px-5 py-3 bg-rose-600 hover:bg-rose-700 text-white border-2 border-rose-700 text-xs sm:text-sm font-black rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                  title="Click to instantly close shop and disable payments"
                 >
                   <StatusBlinkDot isOpen={false} size="sm" />
-                  <span>CLOSE SHOP</span>
+                  <span>CLOSE SHOP (DISABLE PAYMENTS)</span>
                 </button>
               ) : (
                 <button
                   type="button"
-                  onClick={() => setShowShopStatusModal(true)}
-                  className="px-5 py-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-2 border-emerald-300 text-xs sm:text-sm font-black rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                  onClick={() => handleQuickToggleShopStatus('OPEN')}
+                  className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white border-2 border-emerald-700 text-xs sm:text-sm font-black rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                  title="Click to instantly open shop and enable payments"
                 >
                   <StatusBlinkDot isOpen={true} size="sm" />
-                  <span>OPEN SHOP</span>
+                  <span>OPEN SHOP (ENABLE PAYMENTS)</span>
                 </button>
               )}
 

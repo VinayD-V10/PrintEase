@@ -666,6 +666,7 @@ export default function App() {
       {reviewOrder && (
         <OrderReviewModal
           order={reviewOrder}
+          shopStatus={shopStatus}
           onClose={() => setReviewOrder(null)}
           onProceedToPayment={(lockedOrder) => {
             setReviewOrder(null);
@@ -690,7 +691,15 @@ export default function App() {
             registerMyPlacedOrder(paidOrder.order_id);
             setSuccessOrder(paidOrder);
             setOrders((prev) => {
-              const updated = [paidOrder, ...prev.filter((o) => o.order_id !== paidOrder.order_id)];
+              const updated = [
+                paidOrder,
+                ...prev.filter(
+                  (o) =>
+                    o.order_id !== paidOrder.order_id &&
+                    o.order_id !== paymentOrder.order_id &&
+                    o.id !== paidOrder.id
+                ),
+              ];
               saveClientStoredOrders(updated);
               return updated;
             });

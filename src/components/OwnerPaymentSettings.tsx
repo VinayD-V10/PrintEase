@@ -108,6 +108,7 @@ export const OwnerPaymentSettings: React.FC = () => {
       // Local storage fallback so it always succeeds
       saveClientStoredOwnerPaymentSettings(settings);
     } finally {
+      window.dispatchEvent(new CustomEvent('printease_payment_settings_updated', { detail: settings }));
       setIsSaving(false);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);

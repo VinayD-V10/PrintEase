@@ -61,7 +61,38 @@ export const PaymentModal: React.FC<Props> = ({
 
   // Exact fixed amount - CANNOT BE MODIFIED BY USER
   const amount = order.price_breakdown.final_total;
-  const isShopOpen = shopStatus ? shopStatus.status === 'OPEN' : true;
+
+  // Live reactive Shop Status
+  const [liveShopStatus, setLiveShopStatus] = useState<ShopStatusInfo | null>(shopStatus);
+
+  useEffect(() => {
+    setLiveShopStatus(shopStatus);
+  }, [shopStatus]);
+
+  useEffect(() => {
+    const handleShopStatusChange = (e: any) => {
+      if (e.detail) {
+        setLiveShopStatus(e.detail);
+      }
+    };
+    const handlePaymentSettingsUpdate = (e: any) => {
+      if (e.detail) {
+        setShopPayment((prev) => ({ ...prev, ...e.detail }));
+      } else {
+        setShopPayment(getClientStoredOwnerPaymentSettings());
+      }
+    };
+
+    window.addEventListener('printease_shop_status_changed', handleShopStatusChange);
+    window.addEventListener('printease_payment_settings_updated', handlePaymentSettingsUpdate);
+
+    return () => {
+      window.removeEventListener('printease_shop_status_changed', handleShopStatusChange);
+      window.removeEventListener('printease_payment_settings_updated', handlePaymentSettingsUpdate);
+    };
+  }, []);
+
+  const isShopOpen = liveShopStatus ? liveShopStatus.status === 'OPEN' : true;
 
   // Load latest shop payment credentials and student wallet
   useEffect(() => {
@@ -205,8 +236,13 @@ export const PaymentModal: React.FC<Props> = ({
 
       // Step 3: Resilient Standalone Verification (For static hosting / GitHub Pages)
       const transactionRef = `TXN_PE_${Date.now().toString().slice(-8)}`;
+      const officialOrderId = order.order_id.startsWith('DRAFT-')
+        ? `PE${Math.floor(10000 + Math.random() * 90000)}`
+        : order.order_id;
+
       const confirmedOrder: Order = {
         ...order,
+        order_id: officialOrderId,
         order_status: 'PAID',
         payment_status: 'PAID',
         payment_method: methodLabel,
@@ -216,7 +252,7 @@ export const PaymentModal: React.FC<Props> = ({
 
       const paymentRecord: PaymentTransaction = {
         id: `pay_${Date.now()}`,
-        order_id: order.order_id,
+        order_id: officialOrderId,
         system_order_id: order.id,
         amount: amount,
         currency: 'INR',
@@ -270,7 +306,7 @@ export const PaymentModal: React.FC<Props> = ({
         const data = await res.json();
         const paymentRecord: PaymentTransaction = {
           id: data.transaction?.id || `wtx_${Date.now()}`,
-          order_id: order.order_id,
+          order_id: data.order?.order_id || order.order_id,
           system_order_id: order.id,
           amount: amount,
           currency: 'INR',
@@ -289,23 +325,29 @@ export const PaymentModal: React.FC<Props> = ({
       }
 
       // Local storage fallback for wallet
+      const officialOrderId = order.order_id.startsWith('DRAFT-')
+        ? `PE${Math.floor(10000 + Math.random() * 90000)}`
+        : order.order_id;
+
       const confirmedOrder: Order = {
         ...order,
+        order_id: officialOrderId,
         order_status: 'PAID',
         payment_status: 'PAID',
         payment_method: 'PrintEase Wallet',
+        transaction_reference: `WTX_${officialOrderId}`,
         updated_at: new Date().toISOString(),
       };
 
       const paymentRecord: PaymentTransaction = {
         id: `wtx_${Date.now()}`,
-        order_id: order.order_id,
+        order_id: officialOrderId,
         system_order_id: order.id,
         amount: amount,
         currency: 'INR',
         gateway_order_id: 'WALLET_LEDGER',
         gateway_payment_id: `WTX_${Date.now()}`,
-        transaction_reference: `WTX_${order.order_id}`,
+        transaction_reference: `WTX_${officialOrderId}`,
         payment_method: 'PrintEase Wallet',
         payment_status: 'SUCCESS',
         signature_verified: true,
@@ -334,8 +376,13 @@ export const PaymentModal: React.FC<Props> = ({
               <span>Campus Xerox Payment Portal</span>
             </div>
             <h3 className="text-xl sm:text-2xl font-black tracking-tight text-[#FFF5E1]">
-              Order #{order.order_id}
+              {order.order_id.startsWith('DRAFT-') ? 'Payable Amount Checkout' : `Order #${order.order_id}`}
             </h3>
+            {order.order_id.startsWith('DRAFT-') && (
+              <span className="text-[11px] text-[#EBC176] block font-semibold mt-0.5">
+                Official Order ID will be generated upon verified payment
+              </span>
+            )}
           </div>
 
           <div className="text-right">

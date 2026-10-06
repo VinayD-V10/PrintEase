@@ -12,6 +12,8 @@ import {
   ShieldCheck,
   X,
   Store,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { Order, PaymentTransaction } from '../types/printease';
 
@@ -30,6 +32,8 @@ export const PaymentSuccessModal: React.FC<Props> = ({
   onViewReceipt,
   onTrackOrder,
 }) => {
+  const [copied, setCopied] = React.useState(false);
+
   useEffect(() => {
     // Launch celebratory confetti
     try {
@@ -43,6 +47,12 @@ export const PaymentSuccessModal: React.FC<Props> = ({
       // Ignore if confetti not supported
     }
   }, []);
+
+  const handleCopyOrderId = () => {
+    navigator.clipboard.writeText(order.order_id);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
@@ -71,13 +81,28 @@ export const PaymentSuccessModal: React.FC<Props> = ({
         {/* Content */}
         <div className="p-6 sm:p-8 overflow-y-auto space-y-6">
           {/* Order ID Banner */}
-          <div className="p-5 bg-[#C48B28]/15 border-2 border-[#C48B28]/40 rounded-2xl text-center shadow-xs">
+          <div className="p-5 bg-[#C48B28]/15 border-2 border-[#C48B28]/40 rounded-2xl text-center shadow-xs relative">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1">
               Your Official PrintEase Order ID
             </span>
-            <div className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-[#C48B28]">
-              {order.order_id}
+            <div className="flex items-center justify-center gap-3">
+              <div className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-[#C48B28]">
+                {order.order_id}
+              </div>
+              <button
+                type="button"
+                onClick={handleCopyOrderId}
+                className="p-2 rounded-xl bg-white/80 hover:bg-white text-[#C48B28] hover:text-[#5A3C0B] border border-[#C48B28]/30 shadow-xs transition-all cursor-pointer"
+                title="Copy Order ID"
+              >
+                {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+              </button>
             </div>
+            {copied && (
+              <span className="text-[10px] text-emerald-700 font-bold block mt-1 animate-fadeIn">
+                Order ID copied to clipboard!
+              </span>
+            )}
             <div className="text-xs text-slate-600 mt-1 font-medium">
               Show this Order ID at the shop counter to collect your prints.
             </div>
