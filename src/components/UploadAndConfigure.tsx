@@ -1123,6 +1123,38 @@ export const UploadAndConfigure: React.FC<Props> = ({
             <span>{formError}</span>
           </div>
         )}
+
+        {/* Mobile Floating Quick Action Bar (Visible only on mobile phones when a document is uploaded) */}
+        {uploadedFileData && (
+          <div className="md:hidden fixed bottom-14 inset-x-0 z-40 bg-[#422C09]/95 backdrop-blur-md border-t border-[#C48B28]/40 px-4 py-2.5 shadow-2xl flex items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-black text-lg text-[#FFF5E1]">₹{estimated.total}</span>
+                <span className="text-[10px] text-[#EBC176] font-semibold">
+                  ({options.color_type} · {options.copies} {options.copies === 1 ? 'copy' : 'copies'})
+                </span>
+              </div>
+              <span className="text-[10px] text-[#FFF5E1]/70 block truncate max-w-[150px]">
+                {uploadedFileData.original_name}
+              </span>
+            </div>
+
+            <button
+              type="submit"
+              disabled={submittingOrder || !uploadedFileData || (shopStatus?.status === 'CLOSED')}
+              className="btn-smooth btn-dual-shimmer px-4 py-2 text-[#FFF5E1] text-xs font-black rounded-xl shadow-md flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
+            >
+              {submittingOrder ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <>
+                  <span>Review &amp; Lock</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );

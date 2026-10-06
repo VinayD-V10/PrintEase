@@ -11,3 +11,6 @@ createRoot(document.getElementById('root')!).render(
     </ErrorBoundary>
   </StrictMode>,
 );
+
+(window as any).__PRINT_EASE_MOUNTED__ = true;
+

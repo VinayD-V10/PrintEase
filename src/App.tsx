@@ -27,6 +27,7 @@ import { OwnerDashboard } from './components/OwnerDashboard';
 import { PickupKioskView } from './components/PickupKioskView';
 import { SecurityCommandCenter } from './components/SecurityCommandCenter';
 import { AnalyticsDashboardView } from './components/AnalyticsDashboardView';
+import { OwnerPaymentSettings } from './components/OwnerPaymentSettings';
 import { AuthModal } from './components/AuthModal';
 import { ShopkeeperAccessModal } from './components/ShopkeeperAccessModal';
 import { ShopStatusControlModal } from './components/ShopStatusControlModal';
@@ -587,7 +588,10 @@ export default function App() {
               />
             )}
 
-            {/* Tab 4: Cyber Defense Shield & Penetration Test */}
+            {/* Tab 4: Owner Payment & Bank Vault (Protected from Customers) */}
+            {shopkeeperTab === 'payments' && <OwnerPaymentSettings />}
+
+            {/* Tab 5: Cyber Defense Shield & Penetration Test */}
             {shopkeeperTab === 'security' && <SecurityCommandCenter />}
           </div>
         )}

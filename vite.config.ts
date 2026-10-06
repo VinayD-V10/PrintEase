@@ -27,6 +27,16 @@ export default defineConfig(() => {
         '@': fileURLToPath(new URL('.', import.meta.url)),
       },
     },
+    build: {
+      outDir: 'dist',
+      rollupOptions: {
+        output: {
+          entryFileNames: 'assets/index.js',
+          chunkFileNames: 'assets/[name]-[hash].js',
+          assetFileNames: 'assets/[name].[ext]',
+        },
+      },
+    },
     server: {
       port: 3000,
       proxy: {

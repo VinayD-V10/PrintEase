@@ -232,3 +232,29 @@ export interface WalletTransaction {
   description: string;
   created_at: string;
 }
+
+export interface OwnerPaymentSettingsData {
+  shop_phone: string;
+  upi_id: string;
+  phonepe_number?: string;
+  gpay_number?: string;
+  paytm_number?: string;
+  bank_name: string;
+  account_holder_name: string;
+  account_number: string;
+  ifsc_code: string;
+  branch_name?: string;
+  qr_code_data?: string;
+  qr_code_image?: string;
+  qr_label?: string;
+  gateway_provider: 'razorpay' | 'cashfree' | 'phonepe_business' | 'paytm_business';
+  gateway_mode: 'live' | 'test';
+  gateway_merchant_id: string;
+  gateway_key_id: string;
+  gateway_webhook_secret: string;
+  auto_settlement_enabled: boolean;
+  settlement_frequency: 'instant' | 'daily_eod' | 't_plus_1';
+  updated_at?: string;
+  updated_by?: string;
+}
+

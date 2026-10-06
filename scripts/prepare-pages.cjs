@@ -7,8 +7,10 @@
 const fs = require('fs');
 const path = require('path');
 
+const rootDir = path.resolve(__dirname, '..');
 const distDir = path.resolve(__dirname, '..', 'dist');
 const docsDir = path.resolve(__dirname, '..', 'docs');
+const rootAssetsDir = path.resolve(__dirname, '..', 'assets');
 
 if (!fs.existsSync(distDir)) {
   console.error('[prepare-pages] dist directory does not exist! Run vite build first.');
@@ -23,10 +25,12 @@ if (fs.existsSync(indexHtmlPath)) {
   console.log('[prepare-pages] Created dist/404.html for SPA routing');
 }
 
-// 2. Create .nojekyll in dist
-const noJekyllPath = path.join(distDir, '.nojekyll');
-fs.writeFileSync(noJekyllPath, '');
-console.log('[prepare-pages] Created dist/.nojekyll');
+// 2. Create .nojekyll in dist and root
+const distNoJekyll = path.join(distDir, '.nojekyll');
+fs.writeFileSync(distNoJekyll, '');
+const rootNoJekyll = path.join(rootDir, '.nojekyll');
+fs.writeFileSync(rootNoJekyll, '');
+console.log('[prepare-pages] Created .nojekyll files');
 
 // 3. Mirror dist into docs folder for GitHub Pages "docs" branch deployment option
 try {
@@ -38,3 +42,27 @@ try {
 } catch (err) {
   console.warn('[prepare-pages] Note: Could not copy to docs folder:', err.message);
 }
+
+// 4. Mirror dist/assets to root assets/ so "main / (root)" deployment works out-of-the-box
+try {
+  const distAssetsDir = path.join(distDir, 'assets');
+  if (fs.existsSync(distAssetsDir)) {
+    if (fs.existsSync(rootAssetsDir)) {
+      fs.rmSync(rootAssetsDir, { recursive: true, force: true });
+    }
+    fs.cpSync(distAssetsDir, rootAssetsDir, { recursive: true });
+    console.log('[prepare-pages] Successfully synchronized root assets/ directory');
+  }
+} catch (err) {
+  console.warn('[prepare-pages] Note: Could not copy to root assets:', err.message);
+}
+
+// 5. Copy 404.html to root
+try {
+  const root404Path = path.join(rootDir, '404.html');
+  if (fs.existsSync(notFoundHtmlPath)) {
+    fs.copyFileSync(notFoundHtmlPath, root404Path);
+    console.log('[prepare-pages] Synchronized root 404.html');
+  }
+} catch (err) {}
+

@@ -19,13 +19,14 @@ import {
   Sun,
   Moon,
   HardDrive,
+  CreditCard,
 } from 'lucide-react';
 import { User, NotificationItem, ShopStatusInfo } from '../types/printease';
 import { StatusBlinkDot } from './StatusBlinkDot';
 
 export type PortalMode = 'customer' | 'shopkeeper';
 export type CustomerPage = 'upload' | 'files' | 'track' | 'wallet' | 'orders';
-export type ShopkeeperTab = 'queue' | 'kiosk' | 'analytics' | 'security';
+export type ShopkeeperTab = 'queue' | 'kiosk' | 'analytics' | 'payments' | 'security';
 
 interface NavbarProps {
   portal: PortalMode;
@@ -135,6 +136,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
 
               <button
+                onClick={() => onSelectShopkeeperTab('payments')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  shopkeeperTab === 'payments'
+                    ? 'bg-[#C48B28] text-[#FFF5E1] shadow-sm'
+                    : 'text-[#FFF5E1]/80 hover:text-white hover:bg-[#C48B28]/20'
+                }`}
+                title="Owner Payment & Banking Settings"
+              >
+                <CreditCard className="w-4 h-4" />
+                <span>Payment Settings</span>
+              </button>
+
+              <button
                 onClick={() => onSelectShopkeeperTab('security')}
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                   shopkeeperTab === 'security'
@@ -211,66 +225,94 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </div>
           </div>
-
-          {/* Shopkeeper Mobile Navigation Bar */}
-          <div className="lg:hidden flex items-center overflow-x-auto py-2 gap-1.5 border-t border-[#C48B28]/20 no-scrollbar">
-            <button
-              onClick={() => onSelectShopkeeperTab('queue')}
-              className={`px-3 py-1 rounded-lg text-xs font-bold shrink-0 flex items-center gap-1 ${
-                shopkeeperTab === 'queue'
-                  ? 'bg-[#C48B28] text-[#FFF5E1]'
-                  : 'bg-[#352206] text-[#FFF5E1]/80'
-              }`}
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Queue</span>
-            </button>
-
-            <button
-              onClick={() => onSelectShopkeeperTab('kiosk')}
-              className={`px-3 py-1 rounded-lg text-xs font-bold shrink-0 flex items-center gap-1 ${
-                shopkeeperTab === 'kiosk'
-                  ? 'bg-[#C48B28] text-[#FFF5E1]'
-                  : 'bg-[#352206] text-[#FFF5E1]/80'
-              }`}
-            >
-              <PackageCheck className="w-3.5 h-3.5" />
-              <span>Kiosk</span>
-            </button>
-
-            <button
-              onClick={() => onSelectShopkeeperTab('analytics')}
-              className={`px-3 py-1 rounded-lg text-xs font-bold shrink-0 flex items-center gap-1 ${
-                shopkeeperTab === 'analytics'
-                  ? 'bg-[#C48B28] text-[#FFF5E1]'
-                  : 'bg-[#352206] text-[#FFF5E1]/80'
-              }`}
-            >
-              <TrendingUp className="w-3.5 h-3.5" />
-              <span>Analytics</span>
-            </button>
-
-            <button
-              onClick={() => onSelectShopkeeperTab('security')}
-              className={`px-3 py-1 rounded-lg text-xs font-bold shrink-0 flex items-center gap-1 ${
-                shopkeeperTab === 'security'
-                  ? 'bg-[#C48B28] text-[#FFF5E1]'
-                  : 'bg-[#352206] text-[#FFF5E1]/80'
-              }`}
-            >
-              <ShieldAlert className="w-3.5 h-3.5" />
-              <span>Shield</span>
-            </button>
-
-            <button
-              onClick={onOpenPhpSpecs}
-              className="px-3 py-1 rounded-lg text-xs font-bold shrink-0 flex items-center gap-1 bg-[#352206] text-[#C48B28]"
-            >
-              <FileCode className="w-3.5 h-3.5" />
-              <span>PHP</span>
-            </button>
-          </div>
         </div>
+
+        {/* Shopkeeper Fixed Mobile App Bottom Navigation Bar */}
+        <nav
+          aria-label="Shopkeeper Navigation"
+          className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-[#422C09]/95 backdrop-blur-md border-t border-[#C48B28]/35 shadow-2xl px-2 py-1.5 flex items-center justify-around pb-safe"
+        >
+          <button
+            onClick={() => onSelectShopkeeperTab('queue')}
+            className={`flex flex-col items-center justify-center min-w-[56px] py-1 gap-0.5 rounded-xl text-[10px] font-bold cursor-pointer transition-all ${
+              shopkeeperTab === 'queue'
+                ? 'text-[#C48B28] font-black'
+                : 'text-[#FFF5E1]/70 hover:text-white'
+            }`}
+          >
+            <div className={`p-1 rounded-lg ${shopkeeperTab === 'queue' ? 'bg-[#C48B28]/25 text-[#C48B28]' : ''}`}>
+              <Printer className="w-4 h-4" />
+            </div>
+            <span>Queue</span>
+          </button>
+
+          <button
+            onClick={() => onSelectShopkeeperTab('kiosk')}
+            className={`flex flex-col items-center justify-center min-w-[56px] py-1 gap-0.5 rounded-xl text-[10px] font-bold cursor-pointer transition-all ${
+              shopkeeperTab === 'kiosk'
+                ? 'text-[#C48B28] font-black'
+                : 'text-[#FFF5E1]/70 hover:text-white'
+            }`}
+          >
+            <div className={`p-1 rounded-lg ${shopkeeperTab === 'kiosk' ? 'bg-[#C48B28]/25 text-[#C48B28]' : ''}`}>
+              <PackageCheck className="w-4 h-4" />
+            </div>
+            <span>Kiosk</span>
+          </button>
+
+          <button
+            onClick={() => onSelectShopkeeperTab('analytics')}
+            className={`flex flex-col items-center justify-center min-w-[56px] py-1 gap-0.5 rounded-xl text-[10px] font-bold cursor-pointer transition-all ${
+              shopkeeperTab === 'analytics'
+                ? 'text-[#C48B28] font-black'
+                : 'text-[#FFF5E1]/70 hover:text-white'
+            }`}
+          >
+            <div className={`p-1 rounded-lg ${shopkeeperTab === 'analytics' ? 'bg-[#C48B28]/25 text-[#C48B28]' : ''}`}>
+              <TrendingUp className="w-4 h-4" />
+            </div>
+            <span>Analytics</span>
+          </button>
+
+          <button
+            onClick={() => onSelectShopkeeperTab('payments')}
+            className={`flex flex-col items-center justify-center min-w-[56px] py-1 gap-0.5 rounded-xl text-[10px] font-bold cursor-pointer transition-all ${
+              shopkeeperTab === 'payments'
+                ? 'text-[#C48B28] font-black'
+                : 'text-[#FFF5E1]/70 hover:text-white'
+            }`}
+          >
+            <div className={`p-1 rounded-lg ${shopkeeperTab === 'payments' ? 'bg-[#C48B28]/25 text-[#C48B28]' : ''}`}>
+              <CreditCard className="w-4 h-4" />
+            </div>
+            <span>Payments</span>
+          </button>
+
+          <button
+            onClick={() => onSelectShopkeeperTab('security')}
+            className={`flex flex-col items-center justify-center min-w-[56px] py-1 gap-0.5 rounded-xl text-[10px] font-bold cursor-pointer transition-all ${
+              shopkeeperTab === 'security'
+                ? 'text-[#C48B28] font-black'
+                : 'text-[#FFF5E1]/70 hover:text-white'
+            }`}
+          >
+            <div className={`p-1 rounded-lg ${shopkeeperTab === 'security' ? 'bg-[#C48B28]/25 text-[#C48B28]' : ''}`}>
+              <ShieldAlert className="w-4 h-4" />
+            </div>
+            <span>Shield</span>
+          </button>
+
+          <button
+            onClick={onOpenPhpSpecs}
+            className="flex flex-col items-center justify-center min-w-[48px] py-1 gap-0.5 rounded-xl text-[10px] font-bold text-[#EBC176]/80 hover:text-[#C48B28] cursor-pointer"
+            title="PHP Backend"
+          >
+            <div className="p-1 rounded-lg">
+              <FileCode className="w-4 h-4" />
+            </div>
+            <span>PHP</span>
+          </button>
+        </nav>
       </header>
     );
   }
@@ -447,58 +489,86 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Customer Mobile Navigation Bar */}
-        <div className="md:hidden flex items-center justify-around py-2 border-t border-[#C48B28]/20 bg-[#352206]/80 overflow-x-auto no-scrollbar gap-1 rounded-b-xl">
+        {/* Customer Fixed Mobile App Bottom Navigation Bar */}
+        <nav
+          aria-label="Customer Navigation"
+          className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-[#422C09]/95 backdrop-blur-md border-t border-[#C48B28]/35 shadow-2xl px-2 py-1.5 flex items-center justify-around pb-safe"
+        >
           <button
             onClick={() => onSelectCustomerPage('upload')}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer shrink-0 transition-all ${
-              customerPage === 'upload' ? 'bg-[#C48B28] text-[#FFF5E1]' : 'text-[#FFF5E1]/80'
+            className={`flex flex-col items-center justify-center min-w-[56px] py-1 gap-0.5 rounded-xl text-[10px] font-bold cursor-pointer transition-all ${
+              customerPage === 'upload'
+                ? 'text-[#C48B28] font-black'
+                : 'text-[#FFF5E1]/70 hover:text-white'
             }`}
           >
-            <Upload className="w-3.5 h-3.5" />
+            <div className={`p-1 rounded-lg ${customerPage === 'upload' ? 'bg-[#C48B28]/25 text-[#C48B28]' : ''}`}>
+              <Upload className="w-4 h-4" />
+            </div>
             <span>Upload</span>
           </button>
 
           <button
             onClick={() => onSelectCustomerPage('files')}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer shrink-0 transition-all ${
-              customerPage === 'files' ? 'bg-[#C48B28] text-[#FFF5E1]' : 'text-[#FFF5E1]/80'
+            className={`flex flex-col items-center justify-center min-w-[56px] py-1 gap-0.5 rounded-xl text-[10px] font-bold cursor-pointer transition-all ${
+              customerPage === 'files'
+                ? 'text-[#C48B28] font-black'
+                : 'text-[#FFF5E1]/70 hover:text-white'
             }`}
           >
-            <HardDrive className="w-3.5 h-3.5" />
+            <div className={`p-1 rounded-lg ${customerPage === 'files' ? 'bg-[#C48B28]/25 text-[#C48B28]' : ''}`}>
+              <HardDrive className="w-4 h-4" />
+            </div>
             <span>Files</span>
           </button>
 
           <button
             onClick={() => onSelectCustomerPage('track')}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer shrink-0 transition-all ${
-              customerPage === 'track' ? 'bg-[#C48B28] text-[#FFF5E1]' : 'text-[#FFF5E1]/80'
+            className={`flex flex-col items-center justify-center min-w-[56px] py-1 gap-0.5 rounded-xl text-[10px] font-bold cursor-pointer transition-all ${
+              customerPage === 'track'
+                ? 'text-[#C48B28] font-black'
+                : 'text-[#FFF5E1]/70 hover:text-white'
             }`}
           >
-            <Search className="w-3.5 h-3.5" />
+            <div className={`p-1 rounded-lg ${customerPage === 'track' ? 'bg-[#C48B28]/25 text-[#C48B28]' : ''}`}>
+              <Search className="w-4 h-4" />
+            </div>
             <span>Track</span>
           </button>
 
           <button
             onClick={() => onSelectCustomerPage('wallet')}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer shrink-0 transition-all ${
-              customerPage === 'wallet' ? 'bg-[#C48B28] text-[#FFF5E1]' : 'text-[#FFF5E1]/80'
+            className={`flex flex-col items-center justify-center min-w-[56px] py-1 gap-0.5 rounded-xl text-[10px] font-bold cursor-pointer transition-all relative ${
+              customerPage === 'wallet'
+                ? 'text-[#C48B28] font-black'
+                : 'text-[#FFF5E1]/70 hover:text-white'
             }`}
           >
-            <WalletIcon className="w-3.5 h-3.5" />
+            <div className={`p-1 rounded-lg relative ${customerPage === 'wallet' ? 'bg-[#C48B28]/25 text-[#C48B28]' : ''}`}>
+              <WalletIcon className="w-4 h-4" />
+              {walletBalance > 0 && (
+                <span className="absolute -top-1 -right-2 px-1 py-0.2 bg-[#C48B28] text-[#FFF5E1] font-mono text-[9px] font-black rounded-full">
+                  ₹{walletBalance.toFixed(0)}
+                </span>
+              )}
+            </div>
             <span>Wallet</span>
           </button>
 
           <button
             onClick={() => onSelectCustomerPage('orders')}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer shrink-0 transition-all ${
-              customerPage === 'orders' ? 'bg-[#C48B28] text-[#FFF5E1]' : 'text-[#FFF5E1]/80'
+            className={`flex flex-col items-center justify-center min-w-[56px] py-1 gap-0.5 rounded-xl text-[10px] font-bold cursor-pointer transition-all ${
+              customerPage === 'orders'
+                ? 'text-[#C48B28] font-black'
+                : 'text-[#FFF5E1]/70 hover:text-white'
             }`}
           >
-            <BookOpen className="w-3.5 h-3.5" />
+            <div className={`p-1 rounded-lg ${customerPage === 'orders' ? 'bg-[#C48B28]/25 text-[#C48B28]' : ''}`}>
+              <BookOpen className="w-4 h-4" />
+            </div>
             <span>Orders</span>
           </button>
-        </div>
+        </nav>
       </div>
     </header>
   );

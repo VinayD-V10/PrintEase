@@ -1148,4 +1148,96 @@ router.post('/security/test-defense', (req: Request, res: Response) => {
   });
 });
 
+// -------------------------------------------------------------
+// 11. OWNER PAYMENT & BANK VAULT (STRICT OWNER-ONLY ACCESS)
+// -------------------------------------------------------------
+router.get('/owner/payment-settings', (req: Request, res: Response) => {
+  try {
+    const user = getUserFromReq(req);
+    // Strict RBAC: Customers cannot view owner's bank details
+    if (user && user.role === 'customer') {
+      return res.status(403).json({
+        error: 'FORBIDDEN_ACCESS',
+        message: 'Customers are not permitted to access Owner Payment & Banking settings.',
+      });
+    }
+
+    const settings = db.getOwnerPaymentSettings();
+    const revealFull = req.query.reveal === 'true' && user?.role === 'admin';
+
+    // Mask account number unless explicitly authorized admin
+    const rawAcc = settings.account_number || '';
+    const maskedAccountNumber = rawAcc.length > 4
+      ? rawAcc.slice(-4).padStart(rawAcc.length, '•')
+      : '•••• •••• •••• 5821';
+
+    return res.json({
+      settings: {
+        ...settings,
+        account_number: revealFull ? settings.account_number : maskedAccountNumber,
+        is_masked: !revealFull,
+      },
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to retrieve owner payment settings' });
+  }
+});
+
+router.post('/owner/payment-settings', (req: Request, res: Response) => {
+  try {
+    const user = getUserFromReq(req);
+    if (user && user.role === 'customer') {
+      return res.status(403).json({ error: 'Unauthorized to update payment settings.' });
+    }
+
+    const actor = user ? user.name : 'Authorized Shop Owner';
+    const update = req.body;
+
+    const updated = db.updateOwnerPaymentSettings(update, actor);
+
+    db.addAuditLog({
+      user_name: actor,
+      user_role: user ? user.role : 'admin',
+      action: 'PAYMENT_SETTINGS_UPDATED',
+      details: `Owner updated payment & bank configuration (Bank: ${updated.bank_name}, UPI: ${updated.upi_id}, Gateway: ${updated.gateway_provider.toUpperCase()}).`,
+      ip_address: req.ip || '127.0.0.1',
+    });
+
+    return res.json({
+      success: true,
+      message: 'Owner payment settings updated securely.',
+      settings: updated,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Failed to update payment settings' });
+  }
+});
+
+// -------------------------------------------------------------
+// 12. PUBLIC SHOP PAYMENT DETAILS FOR CUSTOMER CHECKOUT
+// (Safe: displays UPI ID, PhonePe, Google Pay, QR Code WITHOUT exposing account/IFSC/secrets)
+// -------------------------------------------------------------
+router.get('/shop-payment-info', (_req: Request, res: Response) => {
+  try {
+    const settings = db.getOwnerPaymentSettings();
+    return res.json({
+      shop_payment: {
+        upi_id: settings.upi_id,
+        shop_phone: settings.shop_phone,
+        phonepe_number: settings.phonepe_number || settings.shop_phone,
+        gpay_number: settings.gpay_number || settings.shop_phone,
+        paytm_number: settings.paytm_number || settings.shop_phone,
+        account_holder_name: settings.account_holder_name,
+        bank_name: settings.bank_name,
+        branch_name: settings.branch_name,
+        qr_code_data: settings.qr_code_data,
+        qr_code_image: settings.qr_code_image,
+        qr_label: settings.qr_label,
+      },
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to retrieve shop payment info' });
+  }
+});
+
 export default router;

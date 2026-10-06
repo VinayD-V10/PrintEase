@@ -15,6 +15,7 @@ import {
   Wallet,
   WalletTransaction,
   RetentionChoice,
+  OwnerPaymentSettingsData,
 } from '../src/types/printease';
 
 const STORAGE_DIR = path.resolve(process.cwd(), 'storage/private');
@@ -49,6 +50,7 @@ export interface DatabaseSchema {
   shop_status?: ShopStatusInfo;
   wallets?: Wallet[];
   wallet_transactions?: WalletTransaction[];
+  owner_payment_settings?: OwnerPaymentSettingsData;
 }
 
 // Password hashing using Node crypto scrypt
@@ -1345,6 +1347,52 @@ class Database {
       wallet_payments_count,
       refunds_amount: Math.round(refunds_amount * 100) / 100,
     };
+  }
+
+  // --- Owner Payment & Bank Vault ---
+  public getOwnerPaymentSettings(): OwnerPaymentSettingsData {
+    if (!this.data.owner_payment_settings) {
+      this.data.owner_payment_settings = {
+        shop_phone: '+91 98765 43210',
+        upi_id: 'printease.campus@okhdfcbank',
+        phonepe_number: '+91 98765 43210',
+        gpay_number: '+91 98765 43210',
+        paytm_number: '+91 98765 43210',
+        bank_name: 'State Bank of India',
+        account_holder_name: 'PrintEase Xerox & Stationery Services',
+        account_number: '394857291842',
+        ifsc_code: 'SBIN0004921',
+        branch_name: 'Campus University Tech Complex, Counter #2',
+        qr_code_data: 'upi://pay?pa=printease.campus@okhdfcbank&pn=PrintEase%20Campus%20Xerox&cu=INR',
+        qr_code_image: '',
+        qr_label: 'PrintEase Official Campus Xerox QR',
+        gateway_provider: 'razorpay',
+        gateway_mode: 'live',
+        gateway_merchant_id: 'rzp_live_PRINTEASE984',
+        gateway_key_id: 'rzp_live_k89a1948201',
+        gateway_webhook_secret: 'whsec_e39f8a847b2c9183',
+        auto_settlement_enabled: true,
+        settlement_frequency: 'daily_eod',
+        updated_at: new Date().toISOString(),
+        updated_by: 'Shop Owner',
+      };
+    }
+    return this.data.owner_payment_settings;
+  }
+
+  public updateOwnerPaymentSettings(
+    update: Partial<OwnerPaymentSettingsData>,
+    updatedBy = 'Shop Owner'
+  ): OwnerPaymentSettingsData {
+    const current = this.getOwnerPaymentSettings();
+    this.data.owner_payment_settings = {
+      ...current,
+      ...update,
+      updated_at: new Date().toISOString(),
+      updated_by: updatedBy,
+    };
+    this.save();
+    return this.data.owner_payment_settings;
   }
 
   public resetDemoData() {

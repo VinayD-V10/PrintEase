@@ -1,0 +1,18 @@
+{
+  "name": "PrintEase - Campus Xerox & Print Station",
+  "short_name": "PrintEase",
+  "description": "Upload, configure printing options, lock prices, pay securely, and pick up verified Xerox prints at the shop.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#FFF5E1",
+  "theme_color": "#422C09",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["productivity", "utilities", "education"]
+}

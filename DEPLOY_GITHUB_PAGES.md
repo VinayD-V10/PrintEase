@@ -1,63 +1,67 @@
 # How to Deploy PrintEase to GitHub Pages
 
-If your website previously displayed a **blank white page** on GitHub Pages, this has now been completely diagnosed and resolved.
+If your website previously displayed a **blank white page** or was **stuck on the "Loading Campus Xerox & Print Station..." screen** (as seen at `vinayd-v10.github.io/PrintEase/`), here is the exact diagnosis and resolution.
 
 ---
 
-## Why did GitHub Pages show a blank white page?
+## Why did it stay stuck on "Loading Campus Xerox & Print Station..."?
 
-1. **Source Code vs. Build Output**: If GitHub Pages is configured to serve the root repository (`/`), it tries to load `<script src="/src/main.tsx">`. Web browsers cannot execute TypeScript/JSX (`.tsx`) files directly without a build step, resulting in a blank white screen.
-2. **Missing Base Path & Trailing Slashes**: GitHub Pages hosts repositories at `https://<username>.github.io/<repo-name>/`. Without proper base path resolution or when accessed without a trailing slash (`/`), the browser attempts to fetch assets from `https://<username>.github.io/assets/...` (which results in 404 Not Found errors).
-3. **Missing `.nojekyll`**: GitHub Pages runs Jekyll by default, which can block or ignore certain directories or filenames.
-4. **SPA 404 Routing**: Refreshing or loading nested states on GitHub Pages serves a 404 error page unless a `404.html` fallback is provided.
+When you pushed your repository and deployed via GitHub Pages (`Deploy from a branch -> main / (root)`):
+1. **GitHub Pages served the root `index.html`**:
+   The root `index.html` contained `<script type="module" src="/src/main.tsx"></script>`.
+2. **Browsers cannot run uncompiled `.tsx` files**:
+   Browsers do not understand TypeScript or JSX without transpilation. GitHub Pages returned a 404/MIME error for `/src/main.tsx`.
+3. **`dist/` was ignored by git**:
+   Previously, `.gitignore` contained `dist/`, so even after building locally, the compiled JavaScript was not pushed to your GitHub repository.
+4. **React never mounted**:
+   Because the script failed to download, React never mounted to replace the loading screen. The animated loading bar stayed visible indefinitely.
 
 ---
 
 ## All Fixes Applied to the Codebase
 
-- **Automatic GitHub Pages workflow**: Added `.github/workflows/deploy.yml` which automatically builds and deploys to GitHub Pages on every push.
-- **Dynamic Base Path**: Updated `vite.config.ts` to automatically detect your repository name (`/${repoName}/`) in GitHub Actions, while defaulting to `./` for universal compatibility.
-- **Trailing Slash Correction & SPA redirect**: Added in `index.html` and `public/404.html` so asset paths resolve reliably regardless of URL format.
-- **Bypass Jekyll Processing**: Added `.nojekyll` to build output.
-- **Dual Output (`dist/` & `docs/`)**: The build command automatically updates both `dist` and `docs/` so you can deploy using any method you prefer.
-- **Branded Instant Loader**: Added an inline theme-matching loader in `index.html` so visitors never see a blank white page while scripts load.
+- **Un-ignored Production Builds**: Removed `dist/` from `.gitignore` so your compiled files can be pushed to GitHub.
+- **Root-Level Asset Syncing (`assets/`)**: Every `npm run build` now places production-ready bundles (`assets/index.js` and `assets/index.css`) directly in the root, in `docs/`, and in `dist/`.
+- **Intelligent Dual-Mode Loader in `index.html`**:
+  - In local development (`npm run dev`), it loads `/src/main.tsx` via Vite.
+  - On GitHub Pages (`vinayd-v10.github.io/PrintEase/`), it automatically detects static hosting and instantly launches `./assets/index.js` and `./assets/index.css`.
+- **Interactive Fallback Watchdog**: Added a timeout fallback with a "Launch PrintEase Station" button so visitors can never get stuck even on heavily throttled network connections.
+- **Automatic GitHub Pages workflow (`.github/workflows/deploy.yml`)**: Official GitHub Actions workflow that builds and deploys on every push to `main`.
+- **SPA 404 Routing (`404.html`) & Jekyll Bypass (`.nojekyll`)**: Handles page refreshes, sub-routes, and prevents Jekyll from interfering with static assets.
 
 ---
 
-## 3 Easy Ways to Deploy
+## How to Update Your Live GitHub Pages Site
 
-### Option 1: Automatic Deployment with GitHub Actions (Recommended)
-This requires zero manual builds and automatically deploys whenever you push to GitHub:
-1. Commit and push the repository to GitHub:
-   ```bash
-   git add .
-   git commit -m "Configure GitHub Pages deployment"
-   git push origin main
-   ```
-2. On GitHub, go to your repository **Settings** > **Pages** (in left sidebar).
-3. Under **Build and deployment** -> **Source**, select **GitHub Actions**.
-4. GitHub Actions will automatically run the build and publish your site at `https://<username>.github.io/<repo-name>/`.
+### Step 1: Push the Latest Code to GitHub
+Run the following in your terminal:
+```bash
+git add .
+git commit -m "Fix GitHub Pages deployment and bundle loader"
+git push origin main
+```
 
 ---
 
-### Option 2: One-Command CLI Deployment (`gh-pages`)
-1. Run in your terminal:
-   ```bash
-   npm run deploy
-   ```
-   *(This automatically builds your app and publishes it to the `gh-pages` branch)*.
-2. On GitHub, go to **Settings** > **Pages**.
-3. Under **Source**, choose **Deploy from a branch**.
-4. Set Branch to **`gh-pages`** and folder to **`/(root)`**, then click **Save**.
+### Step 2: Choose Your Preferred GitHub Pages Setting
 
----
+You can use **any** of the 3 methods below—all 3 are fully supported:
 
-### Option 3: Deploy via `/docs` Folder
-1. Run:
-   ```bash
-   npm run build
-   ```
-   *(This creates the build in both `dist/` and `docs/`)*.
+#### Method A: Direct Root Deployment (Fastest, zero config change)
+If your GitHub Pages is already set to **Deploy from a branch** (`main` / `/(root)`):
+- Simply pushing the code in Step 1 will fix it!
+- Because `./assets/` and the automatic fallback loader are now in the root of the repository, your live site `https://vinayd-v10.github.io/PrintEase/` will now load and open immediately.
+
+#### Method B: Deploy from `/docs` Folder
+1. On GitHub, go to your repository **Settings** > **Pages** (in the left sidebar).
+2. Under **Build and deployment** -> **Source**, keep **Deploy from a branch**.
+3. Under **Branch**, select **`main`** and choose folder **`/docs`**, then click **Save**.
+
+#### Method C: GitHub Actions (Recommended for automated builds)
+1. On GitHub, go to **Settings** > **Pages**.
+2. Under **Build and deployment** -> **Source**, select **GitHub Actions**.
+3. GitHub Actions will automatically run `.github/workflows/deploy.yml` and publish your build to GitHub Pages.
+
 2. Commit and push the `docs/` directory to GitHub:
    ```bash
    git add docs/

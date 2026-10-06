@@ -2,7 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#422C09" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="PrintEase" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="manifest" href="./manifest.webmanifest" />
     <title>PrintEase - Online Xerox & Document Printing Service</title>
     <meta name="description" content="Upload, configure printing options, lock prices, pay securely, and pick up verified Xerox and document prints at the shop." />
     <meta property="og:title" content="PrintEase - Online Xerox & Document Printing Service" />
@@ -39,7 +45,7 @@
   <body class="bg-[#FFF5E1] text-[#422C09]">
     <div id="root">
       <!-- Branded initial loading view (prevents blank white screen while assets download) -->
-      <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #FFF5E1; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; padding: 1.5rem; text-align: center;">
+      <div class="printease-loader-content" style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #FFF5E1; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; padding: 1.5rem; text-align: center;">
         <div style="width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #422C09, #5A3C0B); display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px -5px rgba(66, 44, 9, 0.25); margin-bottom: 1.25rem;">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C48B28" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="6 9 6 2 18 2 18 9"></polyline>
@@ -56,6 +62,19 @@
         <div style="margin-top: 1.5rem; width: 140px; height: 4px; background: rgba(196, 139, 40, 0.2); border-radius: 9999px; overflow: hidden;">
           <div style="width: 45%; height: 100%; background: #C48B28; border-radius: 9999px; animation: printease-load 1.2s infinite ease-in-out;"></div>
         </div>
+
+        <!-- Helpful recovery button if static network is slow -->
+        <div id="printease-load-hint" style="display: none; margin-top: 1.75rem; max-width: 320px; font-size: 0.8rem; color: #5A3C0B;">
+          <p style="margin-bottom: 0.75rem;">Taking longer than expected?</p>
+          <button
+            type="button"
+            onclick="window.__loadPrintEaseBundle && window.__loadPrintEaseBundle(); this.innerText='Connecting...';"
+            style="background: #C48B28; color: #FFF5E1; border: none; padding: 0.5rem 1.25rem; border-radius: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(196, 139, 40, 0.3);"
+          >
+            Launch PrintEase Station
+          </button>
+        </div>
+
         <style>
           @keyframes printease-load {
             0% { transform: translateX(-100%); }
@@ -65,7 +84,89 @@
         </style>
       </div>
     </div>
-    <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Entry point for Vite dev server & Vite build -->
+    <script type="module" src="/src/main.tsx" onerror="window.__loadPrintEaseBundle && window.__loadPrintEaseBundle()"></script>
+
+    <!-- Automatic Production Bundle Loader for GitHub Pages Root Deployments -->
+    <script>
+      (function() {
+        var isGitHub = window.location.hostname.indexOf('github.io') !== -1;
+        var loaded = false;
+
+        function getBasePath() {
+          var p = window.location.pathname;
+          if (/\/[^/]+\.[^/]+$/.test(p)) {
+            p = p.replace(/\/[^/]+\.[^/]+$/, '/');
+          }
+          if (!p.endsWith('/')) {
+            p += '/';
+          }
+          return p;
+        }
+
+        function loadProductionBundle() {
+          if (loaded || window.__PRINT_EASE_MOUNTED__) return;
+          loaded = true;
+          console.info('[PrintEase] Activating production assets for GitHub Pages...');
+
+          var base = getBasePath();
+          var cssUrl = base + 'assets/index.css';
+          var jsUrl = base + 'assets/index.js';
+
+          // Ensure production CSS is linked
+          if (!document.querySelector('link[href*="index.css"]')) {
+            var css = document.createElement('link');
+            css.rel = 'stylesheet';
+            css.href = cssUrl;
+            document.head.appendChild(css);
+          }
+
+          // Inject production JS module (without crossOrigin to avoid CORS restrictions on static hosts)
+          if (!document.querySelector('script[src*="index.js"]')) {
+            var js = document.createElement('script');
+            js.type = 'module';
+            js.src = jsUrl;
+            js.onerror = function() {
+              // Secondary fallback to relative path
+              var fallback = document.createElement('script');
+              fallback.type = 'module';
+              fallback.src = './assets/index.js';
+              document.body.appendChild(fallback);
+            };
+            document.body.appendChild(js);
+          }
+        }
+
+        window.__loadPrintEaseBundle = loadProductionBundle;
+
+        // On GitHub Pages or static host, activate bundle immediately
+        if (isGitHub) {
+          // Listen for failed main.tsx script request
+          window.addEventListener('error', function(e) {
+            if (e.target && e.target.src && e.target.src.indexOf('main.tsx') !== -1) {
+              loadProductionBundle();
+            }
+          }, true);
+
+          // Fast trigger: on GitHub Pages, main.tsx will not exist, so start loading production bundle in 100ms
+          setTimeout(function() {
+            if (!window.__PRINT_EASE_MOUNTED__) {
+              loadProductionBundle();
+            }
+          }, 100);
+
+          // User fallback prompt if network is heavily throttled
+          setTimeout(function() {
+            var root = document.getElementById('root');
+            var hint = document.getElementById('printease-load-hint');
+            if (root && root.querySelector('.printease-loader-content') && hint && !window.__PRINT_EASE_MOUNTED__) {
+              hint.style.display = 'block';
+            }
+          }, 2500);
+        }
+      })();
+    </script>
   </body>
 </html>
 

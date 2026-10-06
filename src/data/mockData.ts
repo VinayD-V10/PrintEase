@@ -1,4 +1,4 @@
-import { Order, ShopStatusInfo, Wallet, WalletTransaction, PricingSettings } from '../types/printease';
+import { Order, ShopStatusInfo, Wallet, WalletTransaction, PricingSettings, OwnerPaymentSettingsData } from '../types/printease';
 
 export const DEFAULT_PRICING: PricingSettings = {
   a4_bw: 1.0,
@@ -298,3 +298,53 @@ export function saveClientStoredWalletTxs(txs: WalletTransaction[]): void {
     localStorage.setItem(STORAGE_WALLET_TXS_KEY, JSON.stringify(txs));
   } catch {}
 }
+
+const STORAGE_OWNER_PAYMENTS_KEY = 'printease_owner_payment_settings';
+
+export const DEFAULT_OWNER_PAYMENT_SETTINGS: OwnerPaymentSettingsData = {
+  shop_phone: '+91 98765 43210',
+  upi_id: 'printease.campus@okhdfcbank',
+  phonepe_number: '+91 98765 43210',
+  gpay_number: '+91 98765 43210',
+  paytm_number: '+91 98765 43210',
+  bank_name: 'State Bank of India',
+  account_holder_name: 'PrintEase Xerox & Stationery Services',
+  account_number: '394857291842',
+  ifsc_code: 'SBIN0004921',
+  branch_name: 'Campus University Tech Complex, Counter #2',
+  qr_code_data: 'upi://pay?pa=printease.campus@okhdfcbank&pn=PrintEase%20Campus%20Xerox&cu=INR',
+  qr_code_image: '',
+  qr_label: 'PrintEase Official Campus Xerox QR',
+  gateway_provider: 'razorpay',
+  gateway_mode: 'live',
+  gateway_merchant_id: 'rzp_live_PRINTEASE984',
+  gateway_key_id: 'rzp_live_k89a1948201',
+  gateway_webhook_secret: 'whsec_e39f8a847b2c9183',
+  auto_settlement_enabled: true,
+  settlement_frequency: 'daily_eod',
+  updated_at: new Date().toISOString(),
+  updated_by: 'Shop Owner',
+};
+
+export function getClientStoredOwnerPaymentSettings(): OwnerPaymentSettingsData {
+  try {
+    const raw = localStorage.getItem(STORAGE_OWNER_PAYMENTS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.upi_id && parsed.bank_name) {
+        return {
+          ...DEFAULT_OWNER_PAYMENT_SETTINGS,
+          ...parsed,
+        };
+      }
+    }
+  } catch {}
+  return DEFAULT_OWNER_PAYMENT_SETTINGS;
+}
+
+export function saveClientStoredOwnerPaymentSettings(settings: OwnerPaymentSettingsData): void {
+  try {
+    localStorage.setItem(STORAGE_OWNER_PAYMENTS_KEY, JSON.stringify(settings));
+  } catch {}
+}
+
