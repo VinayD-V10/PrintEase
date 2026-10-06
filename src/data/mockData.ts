@@ -1,4 +1,12 @@
-import { Order, ShopStatusInfo, Wallet, WalletTransaction, PricingSettings, OwnerPaymentSettingsData } from '../types/printease';
+import {
+  Order,
+  ShopStatusInfo,
+  Wallet,
+  WalletTransaction,
+  PricingSettings,
+  OwnerPaymentSettingsData,
+  User,
+} from '../types/printease';
 
 export const DEFAULT_PRICING: PricingSettings = {
   a4_bw: 1.0,
@@ -346,5 +354,216 @@ export function saveClientStoredOwnerPaymentSettings(settings: OwnerPaymentSetti
   try {
     localStorage.setItem(STORAGE_OWNER_PAYMENTS_KEY, JSON.stringify(settings));
   } catch {}
+}
+
+const STORAGE_CURRENT_USER_KEY = 'printease_current_user';
+const STORAGE_REGISTERED_USERS_KEY = 'printease_registered_users';
+const STORAGE_CUSTOMER_USER_KEY = 'printease_active_customer_user';
+const STORAGE_OWNER_USER_KEY = 'printease_active_owner_user';
+
+export interface StoredUserAccount extends User {
+  password?: string;
+}
+
+export const DEFAULT_USERS: StoredUserAccount[] = [
+  {
+    id: 'usr_student_02',
+    name: 'Vinay',
+    email: 'vinay8046d@gmail.com',
+    phone: '+91 80887 11191',
+    role: 'customer',
+    status: 'active',
+    created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
+    password: 'vinay123',
+  },
+  {
+    id: 'usr_student_01',
+    name: 'Aarav Patel',
+    email: 'student@college.edu',
+    phone: '+91 91234 56789',
+    role: 'customer',
+    status: 'active',
+    created_at: new Date(Date.now() - 86400000 * 14).toISOString(),
+    password: 'student123',
+  },
+  {
+    id: 'usr_admin_01',
+    name: 'Rajesh Sharma (Shop Owner)',
+    email: 'admin@printease.com',
+    phone: '+91 98765 43210',
+    role: 'admin',
+    status: 'active',
+    created_at: new Date(Date.now() - 86400000 * 30).toISOString(),
+    password: 'admin123',
+  },
+];
+
+export function getClientRegisteredUsers(): StoredUserAccount[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_REGISTERED_USERS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch {}
+  return DEFAULT_USERS;
+}
+
+export function saveClientRegisteredUsers(users: StoredUserAccount[]): void {
+  try {
+    localStorage.setItem(STORAGE_REGISTERED_USERS_KEY, JSON.stringify(users));
+  } catch {}
+}
+
+export function getClientActiveCustomerUser(): User {
+  try {
+    const raw = localStorage.getItem(STORAGE_CUSTOMER_USER_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.id && parsed.name && parsed.role === 'customer') {
+        return parsed;
+      }
+    }
+  } catch {}
+  return {
+    id: 'usr_student_02',
+    name: 'Vinay',
+    email: 'vinay8046d@gmail.com',
+    phone: '+91 80887 11191',
+    role: 'customer',
+    status: 'active',
+    created_at: new Date().toISOString(),
+  };
+}
+
+export function saveClientActiveCustomerUser(user: User): void {
+  try {
+    localStorage.setItem(STORAGE_CUSTOMER_USER_KEY, JSON.stringify(user));
+  } catch {}
+}
+
+export function getClientActiveOwnerUser(): User {
+  try {
+    const raw = localStorage.getItem(STORAGE_OWNER_USER_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.id && (parsed.role === 'admin' || parsed.role === 'staff')) {
+        return parsed;
+      }
+    }
+  } catch {}
+  return {
+    id: 'usr_admin_01',
+    name: 'Rajesh Sharma (Shop Owner)',
+    email: 'admin@printease.com',
+    phone: '+91 98765 43210',
+    role: 'admin',
+    status: 'active',
+    created_at: new Date().toISOString(),
+  };
+}
+
+export function saveClientActiveOwnerUser(user: User): void {
+  try {
+    localStorage.setItem(STORAGE_OWNER_USER_KEY, JSON.stringify(user));
+  } catch {}
+}
+
+export function getClientCurrentUser(): User | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_CURRENT_USER_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.id && parsed.name) {
+        return parsed;
+      }
+    }
+  } catch {}
+  return null;
+}
+
+export function saveClientCurrentUser(user: User | null): void {
+  try {
+    if (user) {
+      localStorage.setItem(STORAGE_CURRENT_USER_KEY, JSON.stringify(user));
+      if (user.role === 'customer') {
+        saveClientActiveCustomerUser(user);
+      } else if (user.role === 'admin' || user.role === 'staff') {
+        saveClientActiveOwnerUser(user);
+      }
+    } else {
+      localStorage.removeItem(STORAGE_CURRENT_USER_KEY);
+    }
+  } catch {}
+}
+
+export function clientAuthenticateUser(email: string, password: string): { user: User; token: string } {
+  const normalizedEmail = email.trim().toLowerCase();
+  const allUsers = getClientRegisteredUsers();
+
+  const found = allUsers.find((u) => u.email.toLowerCase() === normalizedEmail);
+
+  if (found) {
+    if (found.password && found.password !== password) {
+      throw new Error('Incorrect password. Please try again.');
+    }
+    const { password: _, ...safeUser } = found;
+    const token = `pe_tok_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+    saveClientCurrentUser(safeUser);
+    return { user: safeUser, token };
+  }
+
+  // If user does not exist yet, automatically create their customer account
+  // so the user is never stuck with an error.
+  const nameFromEmail = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ') || 'Student Customer';
+  const newAccount: StoredUserAccount = {
+    id: `usr_${Date.now()}`,
+    name: nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1),
+    email: normalizedEmail,
+    phone: '+91 98765 43210',
+    role: 'customer',
+    status: 'active',
+    created_at: new Date().toISOString(),
+    password: password || 'password123',
+  };
+
+  const updatedUsers = [newAccount, ...allUsers];
+  saveClientRegisteredUsers(updatedUsers);
+
+  const { password: _, ...safeUser } = newAccount;
+  const token = `pe_tok_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+  saveClientCurrentUser(safeUser);
+  return { user: safeUser, token };
+}
+
+export function clientRegisterUser(params: {
+  name: string;
+  email: string;
+  phone?: string;
+  password?: string;
+}): { user: User; token: string } {
+  const normalizedEmail = params.email.trim().toLowerCase();
+  const allUsers = getClientRegisteredUsers();
+
+  const newAccount: StoredUserAccount = {
+    id: `usr_${Date.now()}`,
+    name: params.name.trim() || 'Student Customer',
+    email: normalizedEmail,
+    phone: (params.phone || '').trim(),
+    role: 'customer',
+    status: 'active',
+    created_at: new Date().toISOString(),
+    password: params.password || 'password123',
+  };
+
+  const updatedUsers = [newAccount, ...allUsers.filter((u) => u.email.toLowerCase() !== normalizedEmail)];
+  saveClientRegisteredUsers(updatedUsers);
+
+  const { password: _, ...safeUser } = newAccount;
+  const token = `pe_tok_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+  saveClientCurrentUser(safeUser);
+  return { user: safeUser, token };
 }
 

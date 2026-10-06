@@ -51,6 +51,12 @@ import {
   saveClientStoredWallet,
   getClientStoredWalletTxs,
   saveClientStoredWalletTxs,
+  getClientCurrentUser,
+  saveClientCurrentUser,
+  getClientActiveCustomerUser,
+  saveClientActiveCustomerUser,
+  getClientActiveOwnerUser,
+  saveClientActiveOwnerUser,
   DEFAULT_PRICING,
 } from './data/mockData';
 import { playOrderAlertSound } from './utils/audio';
@@ -133,7 +139,15 @@ export default function App() {
   const [wallet, setWallet] = useState<Wallet>(getClientStoredWallet);
   const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>(getClientStoredWalletTxs);
 
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const savedPortal = localStorage.getItem('printease_portal_mode');
+    if (savedPortal === 'shopkeeper') {
+      return getClientActiveOwnerUser();
+    }
+    const stored = getClientCurrentUser();
+    if (stored && stored.role === 'customer') return stored;
+    return getClientActiveCustomerUser();
+  });
   const [pricing, setPricing] = useState<PricingSettings>(DEFAULT_PRICING);
   const [orders, setOrders] = useState<Order[]>(getClientStoredOrders);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -205,29 +219,61 @@ export default function App() {
     fetchWallet();
 
     // Check saved session
+    const storedUser = getClientCurrentUser();
+    if (storedUser) {
+      setCurrentUser(storedUser);
+    }
+
     const token = localStorage.getItem('printease_token');
     if (token) {
       fetch('/api/auth/me', {
         headers: { Authorization: `Bearer ${token}` },
       })
-        .then((r) => (r.ok ? r.json() : null))
+        .then((r) => {
+          const contentType = r.headers.get('content-type') || '';
+          if (r.ok && contentType.includes('application/json')) {
+            return r.json();
+          }
+          return null;
+        })
         .then((d) => {
           if (d?.user) {
             setCurrentUser(d.user);
-            if (d.user.role === 'admin' || d.user.role === 'staff') {
-              setPortal('shopkeeper');
-            }
+            saveClientCurrentUser(d.user);
           }
         })
-        .catch(() => localStorage.removeItem('printease_token'));
+        .catch(() => {
+          // Do not delete offline session on static hosts
+        });
     }
   }, []);
 
-  // Save portal preference
+  // Save portal preference and sync role-appropriate user session
   const handleSwitchPortal = (newPortal: PortalMode) => {
     setPortal(newPortal);
     localStorage.setItem('printease_portal_mode', newPortal);
+
+    // Switch active user cleanly so user never gets wrong credentials or role
+    if (newPortal === 'customer') {
+      const cust = getClientActiveCustomerUser();
+      setCurrentUser(cust);
+      saveClientCurrentUser(cust);
+    } else {
+      const owner = getClientActiveOwnerUser();
+      setCurrentUser(owner);
+      saveClientCurrentUser(owner);
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Quick 1-click active customer account selection (Vinay or Aarav)
+  const handleSelectCustomerUser = (user: User) => {
+    saveClientActiveCustomerUser(user);
+    saveClientCurrentUser(user);
+    setCurrentUser(user);
+    fetchOrdersAndNotifications();
+    fetchWallet();
   };
 
   // 4. Fetch Orders & Notifications with smart alert filtering
@@ -302,11 +348,16 @@ export default function App() {
   }, [portal, currentUser?.email]);
 
   // Auth handlers
-  const handleAuthSuccess = (user: User, token: string) => {
+  const handleAuthSuccess = (user: User, token: string, targetPortal?: PortalMode) => {
     localStorage.setItem('printease_token', token);
+    saveClientCurrentUser(user);
     setCurrentUser(user);
-    if (user.role === 'admin' || user.role === 'staff') {
+    if (targetPortal) {
+      handleSwitchPortal(targetPortal);
+    } else if (user.role === 'admin' || user.role === 'staff') {
       handleSwitchPortal('shopkeeper');
+    } else {
+      handleSwitchPortal('customer');
     }
     fetchOrdersAndNotifications();
     fetchWallet();
@@ -323,6 +374,7 @@ export default function App() {
       } catch {}
     }
     localStorage.removeItem('printease_token');
+    saveClientCurrentUser(null);
     setCurrentUser(null);
     handleSwitchPortal('customer');
     fetchOrdersAndNotifications();
@@ -412,6 +464,7 @@ export default function App() {
         }}
         onOpenShopkeeperLogin={() => setShowShopkeeperModal(true)}
         onExitToCustomer={() => handleSwitchPortal('customer')}
+        onSwitchPortal={handleSwitchPortal}
         currentUser={currentUser}
         onOpenAuth={() => setShowAuth(true)}
         onLogout={handleLogout}
@@ -422,6 +475,7 @@ export default function App() {
         shopStatus={shopStatus}
         walletBalance={wallet ? Number(wallet.balance) : 250}
         onOpenShopStatusControl={() => setShowShopStatusModal(true)}
+        onSelectCustomerUser={handleSelectCustomerUser}
       />
 
       {/* Main Content Area */}
@@ -471,6 +525,7 @@ export default function App() {
                   setReviewOrder(lockedOrder);
                 }}
                 onOpenAuth={() => setShowAuth(true)}
+                onSelectCustomerUser={handleSelectCustomerUser}
               />
             )}
 
@@ -773,7 +828,7 @@ export default function App() {
           }}
           onSuccess={(user, token) => {
             setShowShopkeeperModal(false);
-            handleAuthSuccess(user, token);
+            handleAuthSuccess(user, token, 'shopkeeper');
           }}
         />
       )}

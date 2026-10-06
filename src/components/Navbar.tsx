@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Printer,
   Bell,
@@ -15,11 +15,14 @@ import {
   Layers,
   ArrowLeft,
   ChevronRight,
+  ChevronDown,
   Wallet as WalletIcon,
   Sun,
   Moon,
   HardDrive,
   CreditCard,
+  Check,
+  Sparkles,
 } from 'lucide-react';
 import { User, NotificationItem, ShopStatusInfo } from '../types/printease';
 import { StatusBlinkDot } from './StatusBlinkDot';
@@ -36,6 +39,7 @@ interface NavbarProps {
   onSelectShopkeeperTab: (tab: ShopkeeperTab) => void;
   onOpenShopkeeperLogin: () => void;
   onExitToCustomer: () => void;
+  onSwitchPortal?: (portal: PortalMode) => void;
   currentUser: User | null;
   onOpenAuth: () => void;
   onLogout: () => void;
@@ -46,6 +50,7 @@ interface NavbarProps {
   shopStatus?: ShopStatusInfo | null;
   walletBalance?: number;
   onOpenShopStatusControl?: () => void;
+  onSelectCustomerUser?: (user: User) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -56,6 +61,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onSelectShopkeeperTab,
   onOpenShopkeeperLogin,
   onExitToCustomer,
+  onSwitchPortal,
   currentUser,
   onOpenAuth,
   onLogout,
@@ -65,7 +71,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   shopStatus,
   walletBalance = 250,
   onOpenShopStatusControl,
+  onSelectCustomerUser,
 }) => {
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const isShopOpen = shopStatus ? shopStatus.status === 'OPEN' : true;
 
   // ==========================================
@@ -202,26 +210,47 @@ export const Navbar: React.FC<NavbarProps> = ({
                 )}
               </button>
 
-              {/* Exit to Customer App button */}
-              <button
-                onClick={onExitToCustomer}
-                className="px-3 sm:px-4 py-2 bg-[#352206] hover:bg-[#C48B28]/25 text-[#FFF5E1] rounded-xl text-xs font-bold transition-all border border-[#C48B28]/35 flex items-center gap-1.5 cursor-pointer"
-                title="Switch back to Customer View"
-              >
-                <ArrowLeft className="w-4 h-4 text-[#C48B28]" />
-                <span className="hidden sm:inline">Exit to Customer App</span>
-                <span className="sm:hidden">Exit</span>
-              </button>
+              {/* Global Interface Switcher: User Interface vs Owner Interface */}
+              <div className="flex items-center bg-[#2E1C05] p-1 rounded-2xl border border-[#C48B28]/40 shadow-inner">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onSwitchPortal) onSwitchPortal('customer');
+                    else onExitToCustomer();
+                  }}
+                  className="px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 text-[#FFF5E1]/80 hover:text-white hover:bg-[#C48B28]/25"
+                  title="Switch to User Interface (Customer & Student Portal)"
+                >
+                  <UserIcon className="w-3.5 h-3.5 text-[#C48B28]" />
+                  <span className="hidden sm:inline">User Interface</span>
+                  <span className="sm:hidden">User</span>
+                </button>
+                <button
+                  type="button"
+                  disabled
+                  className="px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-black bg-[#C48B28] text-[#FFF5E1] shadow-md ring-1 ring-[#FFF5E1]/30 flex items-center gap-1.5 cursor-default"
+                  title="Currently in Owner Interface"
+                >
+                  <Store className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Owner Interface</span>
+                  <span className="sm:hidden">Owner</span>
+                </button>
+              </div>
 
               {/* Owner Profile / Logout */}
               {currentUser && (
-                <button
-                  onClick={onLogout}
-                  className="p-2 text-[#FFF5E1]/70 hover:text-rose-400 hover:bg-[#C48B28]/15 rounded-xl transition-colors cursor-pointer"
-                  title="Logout"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1.5 pl-1 border-l border-[#C48B28]/30">
+                  <span className="hidden md:inline text-[11px] font-bold text-[#EBC176] px-2 py-0.5 rounded-md bg-[#352206]">
+                    Owner: {currentUser.name.split(' ')[0]}
+                  </span>
+                  <button
+                    onClick={onLogout}
+                    className="p-2 text-[#FFF5E1]/70 hover:text-rose-400 hover:bg-[#C48B28]/15 rounded-xl transition-colors cursor-pointer"
+                    title="Logout"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -447,45 +476,188 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </button>
 
-            {/* Customer Auth / Account */}
-            {currentUser ? (
-              <div className="flex items-center gap-2 pl-2 border-l border-[#C48B28]/30">
-                <div className="hidden sm:block text-right">
-                  <div className="text-xs font-bold text-[#FFF5E1] leading-tight">
-                    {currentUser.name}
+            {/* Global Interface Switcher: User Interface vs Owner Interface */}
+            <div className="flex items-center bg-[#2E1C05] p-1 rounded-2xl border border-[#C48B28]/40 shadow-inner">
+              <button
+                type="button"
+                disabled
+                className="px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-black bg-[#C48B28] text-[#FFF5E1] shadow-md ring-1 ring-[#FFF5E1]/30 flex items-center gap-1.5 cursor-default"
+                title="Currently in User Interface"
+              >
+                <UserIcon className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">User Interface</span>
+                <span className="sm:hidden">User</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onSwitchPortal) onSwitchPortal('shopkeeper');
+                  else onOpenShopkeeperLogin();
+                }}
+                className="px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 text-[#FFF5E1]/80 hover:text-white hover:bg-[#C48B28]/25"
+                title="Switch to Owner Interface (Shopkeeper Console)"
+              >
+                <Store className="w-3.5 h-3.5 text-[#C48B28]" />
+                <span className="hidden sm:inline">Owner Interface</span>
+                <span className="sm:hidden">Owner</span>
+              </button>
+            </div>
+
+            {/* Customer User Account & 1-Click Profile Switcher */}
+            <div className="relative">
+              {currentUser ? (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowUserDropdown(!showUserDropdown)}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-[#352206] hover:bg-[#4E320A] border border-[#C48B28]/40 rounded-xl text-xs cursor-pointer transition-all shadow-xs"
+                    title="Click to Switch Customer Account"
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-[#C48B28] text-[#FFF5E1] flex items-center justify-center font-black text-[11px]">
+                      {currentUser.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="hidden sm:block text-left leading-tight">
+                      <div className="font-extrabold text-[#FFF5E1] text-xs truncate max-w-[110px]">
+                        {currentUser.name}
+                      </div>
+                      <div className="text-[10px] text-[#C48B28] font-mono truncate max-w-[110px]">
+                        {currentUser.email}
+                      </div>
+                    </div>
+                    <ChevronDown className="w-3.5 h-3.5 text-[#C48B28]" />
+                  </button>
+
+                  <button
+                    onClick={onLogout}
+                    className="p-2 text-[#FFF5E1]/70 hover:text-rose-400 hover:bg-[#C48B28]/15 rounded-xl transition-colors cursor-pointer"
+                    title="Logout"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={onOpenAuth}
+                  className="btn-smooth btn-dual-shimmer px-3.5 py-2 rounded-xl text-[#FFF5E1] text-xs font-bold shadow-sm flex items-center gap-1.5 cursor-pointer"
+                >
+                  <UserIcon className="w-3.5 h-3.5 text-[#FFF5E1]" />
+                  <span>Sign In</span>
+                </button>
+              )}
+
+              {/* Fast 1-Click Customer Switcher Dropdown */}
+              {showUserDropdown && (
+                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-slate-200 py-3 px-3 z-50 text-slate-800 animate-fadeIn">
+                  <div className="pb-2 mb-2 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">
+                        Active User
+                      </span>
+                      <strong className="text-xs text-slate-900 block truncate font-extrabold">
+                        {currentUser?.name || 'Customer'}
+                      </strong>
+                      <span className="text-[10px] text-slate-500 font-mono block truncate">
+                        {currentUser?.email || ''}
+                      </span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                      Customer
+                    </span>
                   </div>
-                  <div className="text-[10px] font-semibold text-[#FFF5E1]/70 uppercase tracking-wider">
-                    {currentUser.role}
+
+                  <span className="text-[11px] font-bold text-slate-700 block mb-1.5 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-[#C48B28]" />
+                    <span>Switch Customer Account:</span>
+                  </span>
+
+                  <div className="space-y-1 mb-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const vinayUser: User = {
+                          id: 'usr_student_02',
+                          name: 'Vinay',
+                          email: 'vinay8046d@gmail.com',
+                          phone: '+91 80887 11191',
+                          role: 'customer',
+                          status: 'active',
+                          created_at: new Date().toISOString(),
+                        };
+                        if (onSelectCustomerUser) onSelectCustomerUser(vinayUser);
+                        setShowUserDropdown(false);
+                      }}
+                      className={`w-full px-2.5 py-1.5 rounded-xl text-left text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                        currentUser?.email === 'vinay8046d@gmail.com'
+                          ? 'bg-[#C48B28]/15 text-[#5A3C0B] font-extrabold border border-[#C48B28]/30'
+                          : 'hover:bg-slate-100 text-slate-700'
+                      }`}
+                    >
+                      <div className="truncate">
+                        <span className="font-bold block text-xs">👤 Vinay</span>
+                        <span className="text-[10px] text-slate-500 font-mono">vinay8046d@gmail.com</span>
+                      </div>
+                      {currentUser?.email === 'vinay8046d@gmail.com' && (
+                        <Check className="w-3.5 h-3.5 text-[#C48B28] shrink-0" />
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const aaravUser: User = {
+                          id: 'usr_student_01',
+                          name: 'Aarav Patel',
+                          email: 'student@college.edu',
+                          phone: '+91 91234 56789',
+                          role: 'customer',
+                          status: 'active',
+                          created_at: new Date().toISOString(),
+                        };
+                        if (onSelectCustomerUser) onSelectCustomerUser(aaravUser);
+                        setShowUserDropdown(false);
+                      }}
+                      className={`w-full px-2.5 py-1.5 rounded-xl text-left text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                        currentUser?.email === 'student@college.edu'
+                          ? 'bg-[#C48B28]/15 text-[#5A3C0B] font-extrabold border border-[#C48B28]/30'
+                          : 'hover:bg-slate-100 text-slate-700'
+                      }`}
+                    >
+                      <div className="truncate">
+                        <span className="font-bold block text-xs">🎓 Aarav Patel</span>
+                        <span className="text-[10px] text-slate-500 font-mono">student@college.edu</span>
+                      </div>
+                      {currentUser?.email === 'student@college.edu' && (
+                        <Check className="w-3.5 h-3.5 text-[#C48B28] shrink-0" />
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowUserDropdown(false);
+                        onOpenAuth();
+                      }}
+                      className="text-[#C48B28] font-bold hover:underline cursor-pointer flex items-center gap-1"
+                    >
+                      <span>+ Sign In / Register</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowUserDropdown(false);
+                        onLogout();
+                      }}
+                      className="text-rose-600 font-semibold hover:underline cursor-pointer"
+                    >
+                      Sign Out
+                    </button>
                   </div>
                 </div>
-                <button
-                  onClick={onLogout}
-                  className="p-2 text-[#FFF5E1]/70 hover:text-rose-400 hover:bg-[#C48B28]/15 rounded-xl transition-colors cursor-pointer"
-                  title="Logout"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={onOpenAuth}
-                className="btn-smooth btn-dual-shimmer px-3.5 py-2 rounded-xl text-[#FFF5E1] text-xs font-bold shadow-sm flex items-center gap-1.5 cursor-pointer"
-              >
-                <UserIcon className="w-3.5 h-3.5 text-[#FFF5E1]" />
-                <span>Sign In</span>
-              </button>
-            )}
-
-            {/* Discreet Shopkeeper Access for Staff / Owner */}
-            <button
-              onClick={onOpenShopkeeperLogin}
-              className="btn-smooth px-2.5 sm:px-3 py-1.5 bg-[#C48B28]/20 hover:bg-[#C48B28]/35 text-[#FFF5E1] rounded-xl text-[11px] font-bold border border-[#C48B28]/40 flex items-center gap-1.5 cursor-pointer shadow-2xs"
-              title="Shopkeeper / Owner Portal Login"
-            >
-              <Store className="w-3.5 h-3.5 text-[#C48B28]" />
-              <span className="hidden sm:inline">Shopkeeper Desk</span>
-              <span className="sm:hidden">Shop</span>
-            </button>
+              )}
+            </div>
           </div>
         </div>
 
