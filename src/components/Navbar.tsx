@@ -242,18 +242,28 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </button>
               )}
 
-              {/* Owner Profile / Logout */}
-              {currentUser && (
-                <div className="flex items-center gap-1.5 pl-1 border-l border-[#C48B28]/30">
-                  <span className="hidden md:inline text-[11px] font-bold text-[#EBC176] px-2 py-0.5 rounded-md bg-[#352206]">
-                    Owner: {currentUser.name.split(' ')[0]}
-                  </span>
+              {/* Single Owner Logout Button (Up side only one) */}
+              {onLogout && (
+                <div className="flex items-center gap-1.5 sm:gap-2.5 pl-1.5 sm:pl-2 border-l border-[#C48B28]/30">
+                  {currentUser && (
+                    <div className="hidden lg:flex flex-col text-right leading-tight">
+                      <span className="text-[11px] font-black text-[#EBC176] truncate max-w-[130px]">
+                        {currentUser.name}
+                      </span>
+                      <span className="text-[9px] text-[#FFF5E1]/70 font-mono font-semibold">
+                        Authorized Owner
+                      </span>
+                    </div>
+                  )}
                   <button
+                    type="button"
                     onClick={onLogout}
-                    className="p-2 text-[#FFF5E1]/70 hover:text-rose-400 hover:bg-[#C48B28]/15 rounded-xl transition-colors cursor-pointer"
-                    title="Logout"
+                    className="px-2.5 sm:px-3.5 py-1.5 bg-rose-600/30 hover:bg-rose-600 text-rose-100 hover:text-white rounded-xl text-xs font-black border border-rose-400/60 transition-all cursor-pointer flex items-center gap-1.5 shadow-xs hover:shadow-sm"
+                    title="Owner Logout"
+                    aria-label="Owner Logout"
                   >
-                    <LogOut className="w-4 h-4" />
+                    <LogOut className="w-4 h-4 text-rose-300 group-hover:text-white shrink-0" />
+                    <span>Owner Logout</span>
                   </button>
                 </div>
               )}
@@ -268,7 +278,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         >
           <button
             onClick={() => onSelectShopkeeperTab('queue')}
-            className={`flex flex-col items-center justify-center min-w-[56px] py-1 gap-0.5 rounded-xl text-[10px] font-bold cursor-pointer transition-all ${
+            className={`flex flex-col items-center justify-center min-w-[52px] sm:min-w-[56px] py-1 gap-0.5 rounded-xl text-[10px] font-bold cursor-pointer transition-all ${
               shopkeeperTab === 'queue'
                 ? 'text-[#C48B28] font-black'
                 : 'text-[#FFF5E1]/70 hover:text-white'
@@ -282,7 +292,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             onClick={() => onSelectShopkeeperTab('kiosk')}
-            className={`flex flex-col items-center justify-center min-w-[56px] py-1 gap-0.5 rounded-xl text-[10px] font-bold cursor-pointer transition-all ${
+            className={`flex flex-col items-center justify-center min-w-[52px] sm:min-w-[56px] py-1 gap-0.5 rounded-xl text-[10px] font-bold cursor-pointer transition-all ${
               shopkeeperTab === 'kiosk'
                 ? 'text-[#C48B28] font-black'
                 : 'text-[#FFF5E1]/70 hover:text-white'
@@ -296,7 +306,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             onClick={() => onSelectShopkeeperTab('analytics')}
-            className={`flex flex-col items-center justify-center min-w-[56px] py-1 gap-0.5 rounded-xl text-[10px] font-bold cursor-pointer transition-all ${
+            className={`flex flex-col items-center justify-center min-w-[52px] sm:min-w-[56px] py-1 gap-0.5 rounded-xl text-[10px] font-bold cursor-pointer transition-all ${
               shopkeeperTab === 'analytics'
                 ? 'text-[#C48B28] font-black'
                 : 'text-[#FFF5E1]/70 hover:text-white'
@@ -310,7 +320,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             onClick={() => onSelectShopkeeperTab('payments')}
-            className={`flex flex-col items-center justify-center min-w-[56px] py-1 gap-0.5 rounded-xl text-[10px] font-bold cursor-pointer transition-all ${
+            className={`flex flex-col items-center justify-center min-w-[52px] sm:min-w-[56px] py-1 gap-0.5 rounded-xl text-[10px] font-bold cursor-pointer transition-all ${
               shopkeeperTab === 'payments'
                 ? 'text-[#C48B28] font-black'
                 : 'text-[#FFF5E1]/70 hover:text-white'
@@ -324,7 +334,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             onClick={() => onSelectShopkeeperTab('security')}
-            className={`flex flex-col items-center justify-center min-w-[56px] py-1 gap-0.5 rounded-xl text-[10px] font-bold cursor-pointer transition-all ${
+            className={`flex flex-col items-center justify-center min-w-[52px] sm:min-w-[56px] py-1 gap-0.5 rounded-xl text-[10px] font-bold cursor-pointer transition-all ${
               shopkeeperTab === 'security'
                 ? 'text-[#C48B28] font-black'
                 : 'text-[#FFF5E1]/70 hover:text-white'
@@ -338,7 +348,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             onClick={onOpenPhpSpecs}
-            className="flex flex-col items-center justify-center min-w-[48px] py-1 gap-0.5 rounded-xl text-[10px] font-bold text-[#EBC176]/80 hover:text-[#C48B28] cursor-pointer"
+            className="flex flex-col items-center justify-center min-w-[48px] sm:min-w-[52px] py-1 gap-0.5 rounded-xl text-[10px] font-bold text-[#EBC176]/80 hover:text-[#C48B28] cursor-pointer"
             title="PHP Backend"
           >
             <div className="p-1 rounded-lg">
@@ -485,6 +495,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div ref={dropdownRef} className="relative">
               {currentUser ? (
                 <div className="flex items-center gap-1.5">
+                  {/* Quick Switch to Owner Console if logged in as Admin/Staff */}
+                  {(currentUser.role === 'admin' || currentUser.role === 'staff') && onSwitchPortal && (
+                    <button
+                      type="button"
+                      onClick={() => onSwitchPortal('shopkeeper')}
+                      className="px-2.5 sm:px-3 py-1.5 bg-[#C48B28] hover:bg-[#A9741D] text-[#FFF5E1] rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
+                      title="Return to Owner Console"
+                    >
+                      <Store className="w-3.5 h-3.5" />
+                      <span className="hidden md:inline">Owner Console</span>
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => setShowUserDropdown(!showUserDropdown)}
@@ -500,18 +523,23 @@ export const Navbar: React.FC<NavbarProps> = ({
                         {currentUser.name}
                       </div>
                       <div className="text-[10px] text-[#C48B28] font-mono truncate max-w-[120px]">
-                        {currentUser.email}
+                        {currentUser.role === 'admin' || currentUser.role === 'staff' ? 'Shop Owner' : currentUser.email}
                       </div>
                     </div>
                     <ChevronDown className="w-3.5 h-3.5 text-[#C48B28]" />
                   </button>
 
                   <button
+                    type="button"
                     onClick={onLogout}
-                    className="p-2 text-[#FFF5E1]/70 hover:text-rose-400 hover:bg-[#C48B28]/15 rounded-xl transition-colors cursor-pointer"
-                    title="Logout"
+                    className="px-2.5 sm:px-3 py-1.5 bg-rose-600/30 hover:bg-rose-600 text-rose-100 hover:text-white rounded-xl text-xs font-bold border border-rose-400/50 transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
+                    title={currentUser.role === 'admin' || currentUser.role === 'staff' ? 'Owner Logout' : 'Logout'}
+                    aria-label="Logout"
                   >
-                    <LogOut className="w-4 h-4" />
+                    <LogOut className="w-3.5 h-3.5 text-rose-300 group-hover:text-white shrink-0" />
+                    <span className="hidden sm:inline font-bold">
+                      {currentUser.role === 'admin' || currentUser.role === 'staff' ? 'Owner Logout' : 'Logout'}
+                    </span>
                   </button>
                 </div>
               ) : (
@@ -555,15 +583,29 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                   {/* Dropdown Footer Actions */}
                   <div className="pt-3 space-y-2 text-xs">
+                    {(currentUser.role === 'admin' || currentUser.role === 'staff') && onSwitchPortal && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowUserDropdown(false);
+                          onSwitchPortal('shopkeeper');
+                        }}
+                        className="w-full text-left text-[#C48B28] hover:text-[#5A3C0B] font-bold cursor-pointer flex items-center gap-1.5 py-1"
+                      >
+                        <Store className="w-3.5 h-3.5 text-[#C48B28]" />
+                        <span>Switch to Owner Console</span>
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       onClick={() => {
                         setShowUserDropdown(false);
                         onOpenAuth();
                       }}
-                      className="w-full text-left text-[#C48B28] font-bold hover:underline cursor-pointer flex items-center gap-1.5 py-1"
+                      className="w-full text-left text-slate-600 font-bold hover:underline cursor-pointer flex items-center gap-1.5 py-1"
                     >
-                      <span>+ Sign In / Register</span>
+                      <span>+ Sign In Another Account</span>
                     </button>
 
                     <button
@@ -572,9 +614,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                         setShowUserDropdown(false);
                         onLogout();
                       }}
-                      className="w-full text-left text-rose-600 font-bold hover:text-rose-700 hover:underline cursor-pointer py-1"
+                      className="w-full text-left text-rose-600 font-bold hover:text-rose-700 hover:underline cursor-pointer py-1 flex items-center gap-1.5"
                     >
-                      Sign Out
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>{currentUser.role === 'admin' || currentUser.role === 'staff' ? 'Owner Logout' : 'Sign Out'}</span>
                     </button>
                   </div>
                 </div>

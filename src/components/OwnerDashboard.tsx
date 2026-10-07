@@ -43,6 +43,7 @@ interface Props {
   onViewReceipt: (order: Order) => void;
   shopStatus?: ShopStatusInfo | null;
   onUpdateShopStatus?: (updated: Partial<ShopStatusInfo>) => Promise<void>;
+  onLogout?: () => void;
 }
 
 export const OwnerDashboard: React.FC<Props> = ({
@@ -53,6 +54,7 @@ export const OwnerDashboard: React.FC<Props> = ({
   onViewReceipt,
   shopStatus,
   onUpdateShopStatus,
+  onLogout,
 }) => {
   const [activeTab, setActiveTab] = useState<'queue' | 'pricing' | 'reports' | 'audit'>('queue');
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
@@ -281,11 +283,11 @@ export const OwnerDashboard: React.FC<Props> = ({
           </p>
         </div>
 
-        <div className="relative z-10 flex items-center gap-3">
+        <div className="relative z-10 flex flex-wrap items-center gap-2.5 sm:gap-3">
           {shopStatus && (
             <button
               onClick={() => setShowShopStatusModal(true)}
-              className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 border-2 cursor-pointer shadow-xs ${
+              className={`px-3.5 sm:px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 border-2 cursor-pointer shadow-xs ${
                 shopStatus.status === 'OPEN'
                   ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
                   : 'bg-rose-50 text-rose-800 border-rose-300 hover:bg-rose-100'
@@ -301,11 +303,11 @@ export const OwnerDashboard: React.FC<Props> = ({
               onRefreshOrders();
               fetchStatsAndLogs();
             }}
-            className="p-3 bg-[#FFF5E1] hover:bg-[#FDF6E8] text-[#422C09] border border-[#C48B28]/40 rounded-xl transition-colors cursor-pointer flex items-center gap-2 text-xs font-bold shadow-xs"
+            className="px-3 sm:px-3.5 py-2.5 bg-[#FFF5E1] hover:bg-[#FDF6E8] text-[#422C09] border border-[#C48B28]/40 rounded-xl transition-colors cursor-pointer flex items-center gap-2 text-xs font-bold shadow-xs"
             title="Refresh Orders"
           >
             <RefreshCw className="w-4 h-4 text-[#C48B28]" />
-            <span>Refresh Queue</span>
+            <span className="hidden xs:inline">Refresh Queue</span>
           </button>
         </div>
       </div>

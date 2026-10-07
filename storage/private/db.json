@@ -21,6 +21,28 @@
       "created_at": "2026-09-16T14:34:35.960Z",
       "password_hash": "865bbe583c56b5ed28eb7a38e3ff8d74eee1eb0f41834be3326d5f0d4bd7798967d1b760cf59bba122fa752900ad83f1d15a93d952f8f5219682de49705423b3",
       "salt": "3b19b9834f1fd29c83a1ffa860e7cfcd"
+    },
+    {
+      "id": "usr_student_02",
+      "name": "Vinay",
+      "email": "vinay8046d@gmail.com",
+      "phone": "+91 80887 11191",
+      "role": "admin",
+      "status": "active",
+      "created_at": "2026-10-02T13:52:26.130Z",
+      "password_hash": "805e864db579cd2a23270c37eac470518a2804ba869d999911c597bce144ac4c48c821f1ba1827537da3fe2dba3a0b92a31b2e2c3ed89669794358edafb450ad",
+      "salt": "a6e9e11e2f03307cf3917d43ada0710e"
+    },
+    {
+      "id": "usr_1791385004060_ehgd",
+      "name": "ravi",
+      "email": "ravi8099@gmail.com",
+      "phone": "9090909090",
+      "role": "customer",
+      "status": "active",
+      "created_at": "2026-10-07T14:56:44.060Z",
+      "password_hash": "e3cf0cff2f6ae13aff439eab702cc9f4b2fd638fc0299cf3f677686f55df7a728b15dbcef23b3ee8e776b16229171c6475506878e12579a1ba5ce0c5edd167b1",
+      "salt": "322d10b83193afad4187a34cfce2ce1a"
     }
   ],
   "pricing": {
@@ -121,9 +143,79 @@
       "storage_place": "PrintEase Secure Server Vault (storage/private/uploads/)",
       "created_at": "2026-10-03T08:42:35.287Z",
       "is_deleted": false
+    },
+    {
+      "id": "file_1791376366393_76y64",
+      "original_name": "Screenshot 2026-08-31 202122.png",
+      "stored_name": "pe_doc_1791376366388_11019c25e461f6bc.png",
+      "storage_path": "/app/applet/storage/private/uploads/pe_doc_1791376366388_11019c25e461f6bc.png",
+      "mime_type": "image/png",
+      "file_size": 60130,
+      "page_count": 1,
+      "retention_choice": "PERMANENT",
+      "storage_place": "PrintEase Secure Server Vault (storage/private/uploads/)",
+      "created_at": "2026-10-07T12:32:46.393Z",
+      "is_deleted": false
     }
   ],
   "orders": [
+    {
+      "id": "ord_1791376460959_6jote",
+      "order_id": "PE48302",
+      "customer_name": "Aarav Patel",
+      "customer_email": "student@college.edu",
+      "customer_phone": "+91 91234 56789",
+      "file_id": "file_1791376366393_76y64",
+      "file_name": "Screenshot 2026-08-31 202122.png",
+      "file_size": 60130,
+      "mime_type": "image/png",
+      "page_count": 1,
+      "options": {
+        "paper_size": "A4",
+        "color_type": "COLOR",
+        "side_type": "SINGLE",
+        "copies": 1,
+        "orientation": "PORTRAIT",
+        "binding_type": "NONE",
+        "lamination": true,
+        "urgency": "URGENT",
+        "collection_type": "PICKUP",
+        "delivery_address": "",
+        "special_instructions": "",
+        "custom_color_pages": ""
+      },
+      "price_breakdown": {
+        "page_count": 1,
+        "copies": 1,
+        "sheets_per_copy": 1,
+        "total_sheets": 1,
+        "rate_per_page": 5,
+        "printing_cost": 5,
+        "color_pages_count": 1,
+        "bw_pages_count": 0,
+        "color_rate": 5,
+        "bw_rate": 1,
+        "binding_cost": 0,
+        "lamination_cost": 10,
+        "stapling_cost": 0,
+        "urgency_cost": 20,
+        "delivery_cost": 0,
+        "discount": 0,
+        "final_total": 35,
+        "locked_at": "2026-10-07T12:34:20.957Z"
+      },
+      "price_locked": true,
+      "payment_status": "UNPAID",
+      "order_status": "COMPLETED",
+      "pickup_code": "9726",
+      "retention_choice": "PERMANENT",
+      "storage_place": "PrintEase Secure Server Vault (storage/private/uploads/)",
+      "created_at": "2026-10-07T12:34:20.959Z",
+      "updated_at": "2026-10-07T12:37:27.920Z",
+      "file_deleted": false,
+      "ready_at": "2026-10-07T12:37:21.336Z",
+      "completed_at": "2026-10-07T12:37:27.920Z"
+    },
     {
       "id": "ord_1791016962622_7it5z",
       "order_id": "PE48301",
@@ -171,13 +263,15 @@
       },
       "price_locked": true,
       "payment_status": "UNPAID",
-      "order_status": "PENDING_PAYMENT",
+      "order_status": "COMPLETED",
       "pickup_code": "2937",
       "retention_choice": "PERMANENT",
       "storage_place": "PrintEase Secure Server Vault (storage/private/uploads/)",
       "created_at": "2026-10-03T08:42:42.622Z",
-      "updated_at": "2026-10-03T08:42:42.622Z",
-      "file_deleted": false
+      "updated_at": "2026-10-07T13:43:31.476Z",
+      "file_deleted": false,
+      "ready_at": "2026-10-07T13:43:29.485Z",
+      "completed_at": "2026-10-07T13:43:31.476Z"
     },
     {
       "id": "ord_1790927064473_vf66i",
@@ -276,15 +370,17 @@
       },
       "price_locked": true,
       "payment_status": "PAID",
-      "order_status": "PAID",
+      "order_status": "COMPLETED",
       "pickup_code": "2555",
       "retention_choice": "PERMANENT",
       "storage_place": "PrintEase Secure Server Vault (storage/private/uploads/)",
       "created_at": "2026-10-02T07:35:53.029Z",
-      "updated_at": "2026-10-02T07:35:56.381Z",
+      "updated_at": "2026-10-07T12:31:28.887Z",
       "file_deleted": false,
       "payment_method": "PrintEase Wallet",
-      "transaction_reference": "WTX_PE48299_1790926556380"
+      "transaction_reference": "WTX_PE48299_1790926556380",
+      "ready_at": "2026-10-07T12:31:27.173Z",
+      "completed_at": "2026-10-07T12:31:28.887Z"
     },
     {
       "id": "ord_1790926011790_zvn69",
@@ -333,13 +429,13 @@
       "retention_choice": "PERMANENT",
       "storage_place": "PrintEase Secure Server Vault (storage/private/uploads/)",
       "created_at": "2026-10-02T07:26:51.790Z",
-      "updated_at": "2026-10-02T07:27:23.467Z",
+      "updated_at": "2026-10-07T12:31:36.610Z",
       "file_deleted": true,
       "payment_id": "pay_rec_1790926014549",
       "payment_method": "UPI (QR)",
       "transaction_reference": "TXN_MUQN3WWL_C9D8C145",
-      "ready_at": "2026-10-02T07:27:22.348Z",
-      "completed_at": "2026-10-02T07:27:23.467Z",
+      "ready_at": "2026-10-07T12:31:34.767Z",
+      "completed_at": "2026-10-07T12:31:36.610Z",
       "file_deleted_at": "2026-10-02T07:35:25.658Z"
     },
     {
@@ -749,6 +845,201 @@
     }
   ],
   "audit_logs": [
+    {
+      "id": "log_1791380611476_ae0i",
+      "timestamp": "2026-10-07T13:43:31.476Z",
+      "user_name": "Rajesh Sharma (Shop Owner)",
+      "user_role": "admin",
+      "action": "STATUS_UPDATE",
+      "order_id": "PE48301",
+      "details": "Status changed from READY_FOR_PICKUP to COMPLETED.",
+      "ip_address": "127.0.0.1"
+    },
+    {
+      "id": "log_1791380609485_1den",
+      "timestamp": "2026-10-07T13:43:29.485Z",
+      "user_name": "Rajesh Sharma (Shop Owner)",
+      "user_role": "admin",
+      "action": "STATUS_UPDATE",
+      "order_id": "PE48301",
+      "details": "Status changed from PRINTING to READY_FOR_PICKUP.",
+      "ip_address": "127.0.0.1"
+    },
+    {
+      "id": "log_1791380606232_x0s6",
+      "timestamp": "2026-10-07T13:43:26.232Z",
+      "user_name": "Rajesh Sharma (Shop Owner)",
+      "user_role": "admin",
+      "action": "STATUS_UPDATE",
+      "order_id": "PE48301",
+      "details": "Status changed from PENDING_PAYMENT to PRINTING.",
+      "ip_address": "127.0.0.1"
+    },
+    {
+      "id": "log_1791379338504_dmii",
+      "timestamp": "2026-10-07T13:22:18.504Z",
+      "user_name": "Rajesh Sharma (Shop Owner)",
+      "user_role": "admin",
+      "action": "SHOP_STATUS_CHANGED",
+      "details": "Shop status updated to CLOSED (mode: AUTO, hours: 09:30 - 17:30)",
+      "ip_address": "127.0.0.1"
+    },
+    {
+      "id": "log_1791379288398_44zt",
+      "timestamp": "2026-10-07T13:21:28.398Z",
+      "user_name": "Rajesh Sharma (Shop Owner)",
+      "user_role": "admin",
+      "action": "SHOP_STATUS_CHANGED",
+      "details": "Shop status updated to OPEN (mode: FORCE_OPEN, hours: 09:30 - 17:30)",
+      "ip_address": "127.0.0.1"
+    },
+    {
+      "id": "log_1791376647920_mn46",
+      "timestamp": "2026-10-07T12:37:27.920Z",
+      "user_name": "Rajesh Sharma (Shop Owner)",
+      "user_role": "admin",
+      "action": "STATUS_UPDATE",
+      "order_id": "PE48302",
+      "details": "Status changed from READY_FOR_PICKUP to COMPLETED.",
+      "ip_address": "127.0.0.1"
+    },
+    {
+      "id": "log_1791376641336_yxxe",
+      "timestamp": "2026-10-07T12:37:21.336Z",
+      "user_name": "Rajesh Sharma (Shop Owner)",
+      "user_role": "admin",
+      "action": "STATUS_UPDATE",
+      "order_id": "PE48302",
+      "details": "Status changed from PRINTING to READY_FOR_PICKUP.",
+      "ip_address": "127.0.0.1"
+    },
+    {
+      "id": "log_1791376638938_csm9",
+      "timestamp": "2026-10-07T12:37:18.938Z",
+      "user_name": "Rajesh Sharma (Shop Owner)",
+      "user_role": "admin",
+      "action": "STATUS_UPDATE",
+      "order_id": "PE48302",
+      "details": "Status changed from PENDING_PAYMENT to PRINTING.",
+      "ip_address": "127.0.0.1"
+    },
+    {
+      "id": "log_1791376478472_jonv",
+      "timestamp": "2026-10-07T12:34:38.472Z",
+      "user_name": "Aarav Patel",
+      "user_role": "system",
+      "action": "PAYMENT_FAILED_SIGNATURE",
+      "order_id": "PE48302",
+      "details": "Cryptographic payment verification failure for gateway order order_pe_1791376477437_696a41409200: Cryptographic HMAC-SHA256 signature verification failed. Untrusted transaction parameters.",
+      "ip_address": "127.0.0.1"
+    },
+    {
+      "id": "log_1791376460960_ce8j",
+      "timestamp": "2026-10-07T12:34:20.960Z",
+      "user_name": "Aarav Patel",
+      "user_role": "guest",
+      "action": "PRICE_LOCKED",
+      "order_id": "PE48302",
+      "details": "Price snapshot locked: ₹35 for Screenshot 2026-08-31 202122.png (1 pages, 1 copies).",
+      "ip_address": "127.0.0.1"
+    },
+    {
+      "id": "log_1791376414964_moq5",
+      "timestamp": "2026-10-07T12:33:34.964Z",
+      "user_name": "Rajesh Sharma (Shop Owner)",
+      "user_role": "admin",
+      "action": "SHOP_STATUS_CHANGED",
+      "details": "Shop status updated to OPEN (mode: FORCE_OPEN, hours: 09:30 - 17:30)",
+      "ip_address": "127.0.0.1"
+    },
+    {
+      "id": "log_1791376406610_iaxn",
+      "timestamp": "2026-10-07T12:33:26.610Z",
+      "user_name": "Rajesh Sharma (Shop Owner)",
+      "user_role": "admin",
+      "action": "SHOP_STATUS_CHANGED",
+      "details": "Shop status updated to OPEN (mode: FORCE_OPEN, hours: 09:30 - 17:30)",
+      "ip_address": "127.0.0.1"
+    },
+    {
+      "id": "log_1791376366394_nyht",
+      "timestamp": "2026-10-07T12:32:46.394Z",
+      "user_name": "Guest User",
+      "user_role": "guest",
+      "action": "FILE_UPLOAD",
+      "details": "Uploaded Screenshot 2026-08-31 202122.png (1 pages, 58.7 KB) - Stored in PrintEase Secure Server Vault (storage/private/uploads/) with policy PERMANENT",
+      "ip_address": "127.0.0.1"
+    },
+    {
+      "id": "log_1791376296610_wgun",
+      "timestamp": "2026-10-07T12:31:36.610Z",
+      "user_name": "Rajesh Sharma (Shop Owner)",
+      "user_role": "admin",
+      "action": "STATUS_UPDATE",
+      "order_id": "PE48298",
+      "details": "Status changed from READY_FOR_PICKUP to COMPLETED.",
+      "ip_address": "127.0.0.1"
+    },
+    {
+      "id": "log_1791376294767_7klw",
+      "timestamp": "2026-10-07T12:31:34.767Z",
+      "user_name": "Rajesh Sharma (Shop Owner)",
+      "user_role": "admin",
+      "action": "STATUS_UPDATE",
+      "order_id": "PE48298",
+      "details": "Status changed from PRINTING to READY_FOR_PICKUP.",
+      "ip_address": "127.0.0.1"
+    },
+    {
+      "id": "log_1791376288887_6j1m",
+      "timestamp": "2026-10-07T12:31:28.887Z",
+      "user_name": "Rajesh Sharma (Shop Owner)",
+      "user_role": "admin",
+      "action": "STATUS_UPDATE",
+      "order_id": "PE48299",
+      "details": "Status changed from READY_FOR_PICKUP to COMPLETED.",
+      "ip_address": "127.0.0.1"
+    },
+    {
+      "id": "log_1791376287173_31w3",
+      "timestamp": "2026-10-07T12:31:27.173Z",
+      "user_name": "Rajesh Sharma (Shop Owner)",
+      "user_role": "admin",
+      "action": "STATUS_UPDATE",
+      "order_id": "PE48299",
+      "details": "Status changed from PRINTING to READY_FOR_PICKUP.",
+      "ip_address": "127.0.0.1"
+    },
+    {
+      "id": "log_1791376283570_xf0x",
+      "timestamp": "2026-10-07T12:31:23.570Z",
+      "user_name": "Rajesh Sharma (Shop Owner)",
+      "user_role": "admin",
+      "action": "STATUS_UPDATE",
+      "order_id": "PE48299",
+      "details": "Status changed from PAID to PRINTING.",
+      "ip_address": "127.0.0.1"
+    },
+    {
+      "id": "log_1791376279376_pctu",
+      "timestamp": "2026-10-07T12:31:19.376Z",
+      "user_name": "Rajesh Sharma (Shop Owner)",
+      "user_role": "admin",
+      "action": "STATUS_UPDATE",
+      "order_id": "PE48298",
+      "details": "Status changed from PRINTING to PRINTING.",
+      "ip_address": "127.0.0.1"
+    },
+    {
+      "id": "log_1791376277728_1mdg",
+      "timestamp": "2026-10-07T12:31:17.728Z",
+      "user_name": "Rajesh Sharma (Shop Owner)",
+      "user_role": "admin",
+      "action": "STATUS_UPDATE",
+      "order_id": "PE48298",
+      "details": "Status changed from COMPLETED to PRINTING.",
+      "ip_address": "127.0.0.1"
+    },
     {
       "id": "log_1791016962623_1k7g",
       "timestamp": "2026-10-03T08:42:42.623Z",
@@ -1444,8 +1735,187 @@
   ],
   "notifications": [
     {
-      "id": "notif_1791016531203_sruz",
+      "id": "notif_1791380611477_2k9w",
       "read": false,
+      "created_at": "2026-10-07T13:43:31.477Z",
+      "recipient_role": "customer",
+      "recipient_email": "vinay8046d@gmail.com",
+      "order_id": "PE48301",
+      "title": "✓ Order Completed",
+      "message": "Order #PE48301 has been handed over. Thank you for choosing PrintEase!",
+      "type": "order_completed"
+    },
+    {
+      "id": "notif_1791380609486_mgcl",
+      "read": false,
+      "created_at": "2026-10-07T13:43:29.486Z",
+      "recipient_role": "customer",
+      "recipient_email": "vinay8046d@gmail.com",
+      "order_id": "PE48301",
+      "title": "🎉 Your PrintEase order is ready for pickup!",
+      "message": "Order #PE48301 has been printed and is ready. Visit PrintEase shop with your Order ID.",
+      "type": "order_ready"
+    },
+    {
+      "id": "notif_1791380606233_h2qq",
+      "read": false,
+      "created_at": "2026-10-07T13:43:26.233Z",
+      "recipient_role": "customer",
+      "recipient_email": "vinay8046d@gmail.com",
+      "order_id": "PE48301",
+      "title": "🖨️ Printing in Progress",
+      "message": "Your document is currently being printed on the Xerox machine.",
+      "type": "order_printing"
+    },
+    {
+      "id": "notif_1791379338505_pky7",
+      "read": true,
+      "created_at": "2026-10-07T13:22:18.505Z",
+      "recipient_role": "all",
+      "title": "Shop Closed",
+      "message": "PrintEase is currently closed. Opens at 9:30 AM.",
+      "type": "system"
+    },
+    {
+      "id": "notif_1791379288401_xo9m",
+      "read": true,
+      "created_at": "2026-10-07T13:21:28.401Z",
+      "recipient_role": "all",
+      "title": "Shop Open",
+      "message": "Online printing orders are currently available.",
+      "type": "system"
+    },
+    {
+      "id": "notif_1791376647921_jz31",
+      "read": false,
+      "created_at": "2026-10-07T12:37:27.921Z",
+      "recipient_role": "customer",
+      "recipient_email": "student@college.edu",
+      "order_id": "PE48302",
+      "title": "✓ Order Completed",
+      "message": "Order #PE48302 has been handed over. Thank you for choosing PrintEase!",
+      "type": "order_completed"
+    },
+    {
+      "id": "notif_1791376641337_tn6o",
+      "read": false,
+      "created_at": "2026-10-07T12:37:21.337Z",
+      "recipient_role": "customer",
+      "recipient_email": "student@college.edu",
+      "order_id": "PE48302",
+      "title": "🎉 Your PrintEase order is ready for pickup!",
+      "message": "Order #PE48302 has been printed and is ready. Visit PrintEase shop with your Order ID.",
+      "type": "order_ready"
+    },
+    {
+      "id": "notif_1791376638939_hv5k",
+      "read": false,
+      "created_at": "2026-10-07T12:37:18.939Z",
+      "recipient_role": "customer",
+      "recipient_email": "student@college.edu",
+      "order_id": "PE48302",
+      "title": "🖨️ Printing in Progress",
+      "message": "Your document is currently being printed on the Xerox machine.",
+      "type": "order_printing"
+    },
+    {
+      "id": "notif_1791376414965_sclx",
+      "read": true,
+      "created_at": "2026-10-07T12:33:34.965Z",
+      "recipient_role": "all",
+      "title": "Shop Open",
+      "message": "Online printing orders are currently available.",
+      "type": "system"
+    },
+    {
+      "id": "notif_1791376406611_1kct",
+      "read": true,
+      "created_at": "2026-10-07T12:33:26.611Z",
+      "recipient_role": "all",
+      "title": "Shop Open",
+      "message": "Online printing orders are currently available.",
+      "type": "system"
+    },
+    {
+      "id": "notif_1791376296611_r03d",
+      "read": false,
+      "created_at": "2026-10-07T12:31:36.611Z",
+      "recipient_role": "customer",
+      "recipient_email": "student@college.edu",
+      "order_id": "PE48298",
+      "title": "✓ Order Completed",
+      "message": "Order #PE48298 has been handed over. Thank you for choosing PrintEase!",
+      "type": "order_completed"
+    },
+    {
+      "id": "notif_1791376294768_gigv",
+      "read": false,
+      "created_at": "2026-10-07T12:31:34.768Z",
+      "recipient_role": "customer",
+      "recipient_email": "student@college.edu",
+      "order_id": "PE48298",
+      "title": "🎉 Your PrintEase order is ready for pickup!",
+      "message": "Order #PE48298 has been printed and is ready. Visit PrintEase shop with your Order ID.",
+      "type": "order_ready"
+    },
+    {
+      "id": "notif_1791376288888_28cp",
+      "read": false,
+      "created_at": "2026-10-07T12:31:28.888Z",
+      "recipient_role": "customer",
+      "recipient_email": "student@college.edu",
+      "order_id": "PE48299",
+      "title": "✓ Order Completed",
+      "message": "Order #PE48299 has been handed over. Thank you for choosing PrintEase!",
+      "type": "order_completed"
+    },
+    {
+      "id": "notif_1791376287174_z41d",
+      "read": false,
+      "created_at": "2026-10-07T12:31:27.174Z",
+      "recipient_role": "customer",
+      "recipient_email": "student@college.edu",
+      "order_id": "PE48299",
+      "title": "🎉 Your PrintEase order is ready for pickup!",
+      "message": "Order #PE48299 has been printed and is ready. Visit PrintEase shop with your Order ID.",
+      "type": "order_ready"
+    },
+    {
+      "id": "notif_1791376283571_59j3",
+      "read": false,
+      "created_at": "2026-10-07T12:31:23.571Z",
+      "recipient_role": "customer",
+      "recipient_email": "student@college.edu",
+      "order_id": "PE48299",
+      "title": "🖨️ Printing in Progress",
+      "message": "Your document is currently being printed on the Xerox machine.",
+      "type": "order_printing"
+    },
+    {
+      "id": "notif_1791376279377_6d26",
+      "read": false,
+      "created_at": "2026-10-07T12:31:19.377Z",
+      "recipient_role": "customer",
+      "recipient_email": "student@college.edu",
+      "order_id": "PE48298",
+      "title": "🖨️ Printing in Progress",
+      "message": "Your document is currently being printed on the Xerox machine.",
+      "type": "order_printing"
+    },
+    {
+      "id": "notif_1791376277729_4fh1",
+      "read": false,
+      "created_at": "2026-10-07T12:31:17.729Z",
+      "recipient_role": "customer",
+      "recipient_email": "student@college.edu",
+      "order_id": "PE48298",
+      "title": "🖨️ Printing in Progress",
+      "message": "Your document is currently being printed on the Xerox machine.",
+      "type": "order_printing"
+    },
+    {
+      "id": "notif_1791016531203_sruz",
+      "read": true,
       "created_at": "2026-10-03T08:35:31.203Z",
       "recipient_role": "all",
       "title": "Shop Open",
@@ -1454,7 +1924,7 @@
     },
     {
       "id": "notif_1791016516407_gil3",
-      "read": false,
+      "read": true,
       "created_at": "2026-10-03T08:35:16.407Z",
       "recipient_role": "all",
       "title": "Shop Closed",
@@ -1474,7 +1944,7 @@
     },
     {
       "id": "notif_1790926556382_1oc6",
-      "read": false,
+      "read": true,
       "created_at": "2026-10-02T07:35:56.382Z",
       "recipient_role": "owner",
       "order_id": "PE48299",
@@ -1484,7 +1954,7 @@
     },
     {
       "id": "notif_1790926547060_holz",
-      "read": false,
+      "read": true,
       "created_at": "2026-10-02T07:35:47.060Z",
       "recipient_role": "all",
       "title": "Shop Open",
@@ -1493,7 +1963,7 @@
     },
     {
       "id": "notif_1790926055791_23j1",
-      "read": false,
+      "read": true,
       "created_at": "2026-10-02T07:27:35.791Z",
       "recipient_role": "all",
       "title": "Shop Closed",
@@ -1546,7 +2016,7 @@
     },
     {
       "id": "notif_1790926014551_9h31",
-      "read": false,
+      "read": true,
       "created_at": "2026-10-02T07:26:54.551Z",
       "recipient_role": "owner",
       "order_id": "PE48298",
@@ -1600,7 +2070,7 @@
     },
     {
       "id": "notif_1790924410499_fht2",
-      "read": false,
+      "read": true,
       "created_at": "2026-10-02T07:00:10.499Z",
       "recipient_role": "owner",
       "order_id": "PE48297",
@@ -1709,7 +2179,7 @@
     },
     {
       "id": "notif_1790924214901_lkae",
-      "read": false,
+      "read": true,
       "created_at": "2026-10-02T06:56:54.901Z",
       "recipient_role": "all",
       "title": "Shop Open",
@@ -1718,7 +2188,7 @@
     },
     {
       "id": "notif_1790924144912_bau9",
-      "read": false,
+      "read": true,
       "created_at": "2026-10-02T06:55:44.912Z",
       "recipient_role": "all",
       "title": "Shop Open",
@@ -1727,7 +2197,7 @@
     },
     {
       "id": "notif_1790924134362_783j",
-      "read": false,
+      "read": true,
       "created_at": "2026-10-02T06:55:34.362Z",
       "recipient_role": "all",
       "title": "Shop Open",
@@ -1736,7 +2206,7 @@
     },
     {
       "id": "notif_1790924128603_naxa",
-      "read": false,
+      "read": true,
       "created_at": "2026-10-02T06:55:28.603Z",
       "recipient_role": "all",
       "title": "Shop Closed",
@@ -1789,7 +2259,7 @@
     },
     {
       "id": "notif_1790609692107_0k9e",
-      "read": false,
+      "read": true,
       "created_at": "2026-09-28T15:34:52.107Z",
       "recipient_role": "owner",
       "order_id": "PE48296",
@@ -1799,7 +2269,7 @@
     },
     {
       "id": "notif_1790609681200_yhrl",
-      "read": false,
+      "read": true,
       "created_at": "2026-09-28T15:34:41.200Z",
       "recipient_role": "all",
       "title": "🟢 Shop Open",
@@ -1808,7 +2278,7 @@
     },
     {
       "id": "notif_1790609674785_8xnl",
-      "read": false,
+      "read": true,
       "created_at": "2026-09-28T15:34:34.785Z",
       "recipient_role": "all",
       "title": "🔴 Shop Closed",
@@ -1817,7 +2287,7 @@
     },
     {
       "id": "notif_1790609649198_15gc",
-      "read": false,
+      "read": true,
       "created_at": "2026-09-28T15:34:09.198Z",
       "recipient_role": "all",
       "title": "🟢 Shop Open",
@@ -1868,6 +2338,97 @@
     }
   ],
   "order_status_history": [
+    {
+      "id": "hist_1791380611476_2gtd",
+      "order_id": "PE48301",
+      "status": "COMPLETED",
+      "changed_by": "Rajesh Sharma (Shop Owner)",
+      "timestamp": "2026-10-07T13:43:31.476Z"
+    },
+    {
+      "id": "hist_1791380609485_yxme",
+      "order_id": "PE48301",
+      "status": "READY_FOR_PICKUP",
+      "changed_by": "Rajesh Sharma (Shop Owner)",
+      "timestamp": "2026-10-07T13:43:29.485Z"
+    },
+    {
+      "id": "hist_1791380606232_t02v",
+      "order_id": "PE48301",
+      "status": "PRINTING",
+      "changed_by": "Rajesh Sharma (Shop Owner)",
+      "timestamp": "2026-10-07T13:43:26.232Z"
+    },
+    {
+      "id": "hist_1791376647920_wrjq",
+      "order_id": "PE48302",
+      "status": "COMPLETED",
+      "changed_by": "Rajesh Sharma (Shop Owner)",
+      "timestamp": "2026-10-07T12:37:27.920Z"
+    },
+    {
+      "id": "hist_1791376641336_emib",
+      "order_id": "PE48302",
+      "status": "READY_FOR_PICKUP",
+      "changed_by": "Rajesh Sharma (Shop Owner)",
+      "timestamp": "2026-10-07T12:37:21.336Z"
+    },
+    {
+      "id": "hist_1791376638938_fxk0",
+      "order_id": "PE48302",
+      "status": "PRINTING",
+      "changed_by": "Rajesh Sharma (Shop Owner)",
+      "timestamp": "2026-10-07T12:37:18.938Z"
+    },
+    {
+      "id": "hist_1791376296610_ofw6",
+      "order_id": "PE48298",
+      "status": "COMPLETED",
+      "changed_by": "Rajesh Sharma (Shop Owner)",
+      "timestamp": "2026-10-07T12:31:36.610Z"
+    },
+    {
+      "id": "hist_1791376294767_zgrj",
+      "order_id": "PE48298",
+      "status": "READY_FOR_PICKUP",
+      "changed_by": "Rajesh Sharma (Shop Owner)",
+      "timestamp": "2026-10-07T12:31:34.767Z"
+    },
+    {
+      "id": "hist_1791376288887_6f64",
+      "order_id": "PE48299",
+      "status": "COMPLETED",
+      "changed_by": "Rajesh Sharma (Shop Owner)",
+      "timestamp": "2026-10-07T12:31:28.887Z"
+    },
+    {
+      "id": "hist_1791376287173_ugnp",
+      "order_id": "PE48299",
+      "status": "READY_FOR_PICKUP",
+      "changed_by": "Rajesh Sharma (Shop Owner)",
+      "timestamp": "2026-10-07T12:31:27.173Z"
+    },
+    {
+      "id": "hist_1791376283570_9fxx",
+      "order_id": "PE48299",
+      "status": "PRINTING",
+      "changed_by": "Rajesh Sharma (Shop Owner)",
+      "timestamp": "2026-10-07T12:31:23.570Z"
+    },
+    {
+      "id": "hist_1791376279376_046x",
+      "order_id": "PE48298",
+      "status": "PRINTING",
+      "changed_by": "Rajesh Sharma (Shop Owner)",
+      "timestamp": "2026-10-07T12:31:19.376Z"
+    },
+    {
+      "id": "hist_1791376277728_m9qj",
+      "order_id": "PE48298",
+      "status": "PRINTING",
+      "changed_by": "Rajesh Sharma (Shop Owner)",
+      "timestamp": "2026-10-07T12:31:17.728Z"
+    },
     {
       "id": "hist_1790926043467_zwcy",
       "order_id": "PE48298",
@@ -2017,12 +2578,12 @@
       "note": "Printed and spiral bound successfully."
     }
   ],
-  "order_sequence_counter": 48301,
+  "order_sequence_counter": 48302,
   "shop_status": {
     "mode": "AUTO",
     "accepting_orders": true,
-    "updated_at": "2026-10-03T08:35:31.201Z",
-    "updated_by": "Shop Owner",
+    "updated_at": "2026-10-07T13:22:18.497Z",
+    "updated_by": "Rajesh Sharma (Shop Owner) (admin)",
     "timezone": "Asia/Kolkata",
     "opening_time": "09:30",
     "closing_time": "17:30"
@@ -2045,6 +2606,15 @@
       "status": "active",
       "created_at": "2026-10-02T07:19:58.067Z",
       "updated_at": "2026-10-02T07:19:58.067Z"
+    },
+    {
+      "id": "wlt_student_02",
+      "user_id": "usr_student_02",
+      "balance": 350,
+      "currency": "INR",
+      "status": "active",
+      "created_at": "2026-10-02T13:52:26.131Z",
+      "updated_at": "2026-10-07T13:52:26.131Z"
     }
   ],
   "wallet_transactions": [
@@ -2117,5 +2687,29 @@
       "description": "Wallet Top-up via UPI (Google Pay)",
       "created_at": "2026-09-28T15:34:27.699Z"
     }
-  ]
+  ],
+  "owner_payment_settings": {
+    "shop_phone": "+91 98765 43210",
+    "upi_id": "printease.campus@okhdfcbank",
+    "phonepe_number": "+91 98765 43210",
+    "gpay_number": "+91 98765 43210",
+    "paytm_number": "+91 98765 43210",
+    "bank_name": "State Bank of India",
+    "account_holder_name": "PrintEase Xerox & Stationery Services",
+    "account_number": "394857291842",
+    "ifsc_code": "SBIN0004921",
+    "branch_name": "Campus University Tech Complex, Counter #2",
+    "qr_code_data": "upi://pay?pa=printease.campus@okhdfcbank&pn=PrintEase%20Campus%20Xerox&cu=INR",
+    "qr_code_image": "",
+    "qr_label": "PrintEase Official Campus Xerox QR",
+    "gateway_provider": "razorpay",
+    "gateway_mode": "live",
+    "gateway_merchant_id": "rzp_live_PRINTEASE984",
+    "gateway_key_id": "rzp_live_k89a1948201",
+    "gateway_webhook_secret": "whsec_e39f8a847b2c9183",
+    "auto_settlement_enabled": true,
+    "settlement_frequency": "daily_eod",
+    "updated_at": "2026-10-07T12:31:41.931Z",
+    "updated_by": "Shop Owner"
+  }
 }

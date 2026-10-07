@@ -7,9 +7,7 @@ import {
   Eye,
   EyeOff,
   User as UserIcon,
-  Shield,
   ShieldCheck,
-  Store,
   ArrowRight,
   ArrowLeft,
   RotateCcw,
@@ -18,6 +16,7 @@ import {
   Loader2,
   KeyRound,
   Sparkles,
+  UserCheck,
 } from 'lucide-react';
 import { User } from '../types/printease';
 import {
@@ -28,6 +27,15 @@ import {
   clientVerifyOtp,
   saveClientCurrentUser,
 } from '../data/mockData';
+
+const STORAGE_LAST_LOGGED_IN_KEY = 'printease_last_logged_in_user';
+
+interface SavedAccountInfo {
+  name: string;
+  identifier: string;
+  role: string;
+  savedPassword?: string;
+}
 
 export type AuthMode =
   | 'user-login'
@@ -48,7 +56,7 @@ export const AuthScreen: React.FC<Props> = ({
   onAuthSuccess,
   onCancel,
 }) => {
-  const [mode, setMode] = useState<AuthMode>(initialMode);
+  const [mode, setMode] = useState<AuthMode>(initialMode === 'owner-login' ? 'user-login' : initialMode);
   const [previousMode, setPreviousMode] = useState<AuthMode>('user-login');
 
   // Input fields
@@ -76,6 +84,18 @@ export const AuthScreen: React.FC<Props> = ({
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // Remembered last logged in user
+  const [lastLoggedInUser, setLastLoggedInUser] = useState<SavedAccountInfo | null>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_LAST_LOGGED_IN_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.identifier) return parsed;
+      }
+    } catch {}
+    return null;
+  });
+
   // OTP Input refs
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -90,14 +110,17 @@ export const AuthScreen: React.FC<Props> = ({
     return () => clearInterval(timer);
   }, [mode, resendCooldown]);
 
-  // Focus first OTP input on transition
+  // Focus and prefill OTP on transition
   useEffect(() => {
     if (mode === 'otp') {
+      if (currentOtpCode && currentOtpCode.length === 6) {
+        setOtpDigits(currentOtpCode.split(''));
+      }
       setTimeout(() => {
-        inputRefs.current[0]?.focus();
+        inputRefs.current[5]?.focus();
       }, 150);
     }
-  }, [mode]);
+  }, [mode, currentOtpCode]);
 
   // Handle OTP digit changes
   const handleOtpChange = (index: number, val: string) => {
@@ -461,6 +484,19 @@ export const AuthScreen: React.FC<Props> = ({
         if (verifiedUser && token) {
           const targetPortal = otpPurpose === 'owner_login' ? 'shopkeeper' : 'customer';
           saveClientCurrentUser(verifiedUser);
+
+          // Save who logged in so that on logout, ONLY that user shows in login
+          const savedAccount: SavedAccountInfo = {
+            name: verifiedUser.name || identifier.trim(),
+            identifier: identifier.trim() || verifiedUser.email || verifiedUser.phone || '',
+            role: verifiedUser.role || (otpPurpose === 'owner_login' ? 'admin' : 'customer'),
+            savedPassword: password || undefined,
+          };
+          try {
+            localStorage.setItem(STORAGE_LAST_LOGGED_IN_KEY, JSON.stringify(savedAccount));
+          } catch {}
+          setLastLoggedInUser(savedAccount);
+
           onAuthSuccess(verifiedUser, token, targetPortal);
         }
       }, 700);
@@ -561,8 +597,8 @@ export const AuthScreen: React.FC<Props> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF5E1] text-[#5A3C0B] flex flex-col justify-center items-center px-4 py-8 sm:px-6 selection:bg-[#5A3C0B] selection:text-[#FFF5E1]">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-[#FFF5E1] text-[#5A3C0B] flex flex-col justify-center items-center px-4 py-8 sm:px-6 w-full max-w-full overflow-x-hidden selection:bg-[#5A3C0B] selection:text-[#FFF5E1]">
+      <div className="w-full max-w-md mx-auto">
         {/* Brand Header */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#5A3C0B] text-[#FFF5E1] shadow-lg mb-3">
@@ -579,20 +615,11 @@ export const AuthScreen: React.FC<Props> = ({
         {/* Main Card */}
         <div className="bg-white rounded-3xl shadow-xl border border-[#C48B28]/25 overflow-hidden transition-all duration-300">
           {/* Card Top Banner */}
-          <div className="px-6 py-5 bg-gradient-to-r from-[#422C09] via-[#5A3C0B] to-[#422C09] text-[#FFF5E1] flex items-center justify-between border-b border-[#C48B28]/30">
+          <div className="px-6 py-5 bg-gradient-to-r from-[#422C09] via-[#5A3C0B] to-[#422C09] text-[#FFF5E1] border-b border-[#C48B28]/30">
             <div>
               <span className="text-[10px] font-black tracking-wider uppercase text-[#EBC176] flex items-center gap-1.5">
-                {mode === 'owner-login' ? (
-                  <>
-                    <Store className="w-3.5 h-3.5 text-[#EBC176]" />
-                    <span>Shop Owner &amp; Staff Console</span>
-                  </>
-                ) : (
-                  <>
-                    <UserIcon className="w-3.5 h-3.5 text-[#EBC176]" />
-                    <span>Customer &amp; Student Portal</span>
-                  </>
-                )}
+                <UserIcon className="w-3.5 h-3.5 text-[#EBC176]" />
+                <span>{mode === 'owner-login' ? 'Shop Owner & Staff Console' : 'Customer & Student Portal'}</span>
               </span>
               <h2 className="text-xl font-black text-[#FFF5E1] mt-0.5 tracking-tight">
                 {mode === 'user-login' && 'Welcome Back'}
@@ -603,12 +630,12 @@ export const AuthScreen: React.FC<Props> = ({
                 {mode === 'otp' && 'Verify OTP'}
               </h2>
               <p className="text-xs text-[#FFF5E1]/80 mt-0.5">
-                {mode === 'user-login' && 'Login to continue'}
+                {mode === 'user-login' && 'Login to order campus prints'}
                 {mode === 'signup' && 'Sign up for fast and secure campus printing'}
                 {mode === 'forgot-password' && 'Enter your registered email or phone number'}
                 {mode === 'reset-password' && 'Create your new password'}
-                {mode === 'owner-login' && 'Authorized credentials required for management access'}
-                {mode === 'otp' && 'Enter the 6-digit OTP sent to your email/phone'}
+                {mode === 'owner-login' && 'Management credentials required for shop console'}
+                {mode === 'otp' && 'Enter the 6-digit OTP code to complete verification'}
               </p>
             </div>
           </div>
@@ -634,29 +661,52 @@ export const AuthScreen: React.FC<Props> = ({
           {/* ============================================================== */}
           {mode === 'user-login' && (
             <form onSubmit={handleUserLoginSubmit} className="p-6 space-y-4">
-              {/* Quick Demo Pre-fills */}
-              <div className="p-3 bg-[#FFF5E1]/70 border border-[#C48B28]/30 rounded-xl">
-                <div className="text-[10px] font-black uppercase text-[#5A3C0B]/70 tracking-wider mb-1.5 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-[#C48B28]" />
-                  <span>Quick Test Login (1-Click Fill)</span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
+              {/* Recently Logged In Account (Shows ONLY the user who actually logged in) */}
+              {lastLoggedInUser && lastLoggedInUser.role === 'customer' && (
+                <div className="p-3 bg-[#FFF5E1]/80 border border-[#C48B28]/35 rounded-2xl animate-fadeIn">
+                  <div className="flex items-center justify-between text-[10px] font-black uppercase text-[#5A3C0B]/80 tracking-wider mb-2">
+                    <div className="flex items-center gap-1.5">
+                      <UserCheck className="w-3.5 h-3.5 text-[#C48B28]" />
+                      <span>Saved Account</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        localStorage.removeItem(STORAGE_LAST_LOGGED_IN_KEY);
+                        setLastLoggedInUser(null);
+                      }}
+                      className="text-[10px] font-bold text-slate-400 hover:text-rose-600 cursor-pointer transition-colors"
+                      title="Clear saved account"
+                    >
+                      Clear
+                    </button>
+                  </div>
+
                   <button
                     type="button"
-                    onClick={() => handleQuickFill('vinay8046d@gmail.com', 'vinay123')}
-                    className="px-2.5 py-1 bg-white hover:bg-[#C48B28]/10 border border-[#C48B28]/40 rounded-lg text-xs font-bold text-[#5A3C0B] cursor-pointer transition-colors shadow-2xs"
+                    onClick={() => handleQuickFill(lastLoggedInUser.identifier, lastLoggedInUser.savedPassword || '')}
+                    className="w-full flex items-center justify-between p-2.5 bg-white hover:bg-[#FFF5E1] border border-[#C48B28]/40 rounded-xl transition-all cursor-pointer group shadow-2xs text-left"
                   >
-                    Vinay (Student)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickFill('student@college.edu', 'student123')}
-                    className="px-2.5 py-1 bg-white hover:bg-[#C48B28]/10 border border-[#C48B28]/40 rounded-lg text-xs font-bold text-[#5A3C0B] cursor-pointer transition-colors shadow-2xs"
-                  >
-                    Aarav Patel
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#5A3C0B] to-[#7A5212] text-[#FFF5E1] flex items-center justify-center font-black text-xs shrink-0 shadow-2xs">
+                        {lastLoggedInUser.name ? lastLoggedInUser.name.charAt(0).toUpperCase() : 'U'}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-black text-[#5A3C0B] truncate">
+                          {lastLoggedInUser.name}
+                        </div>
+                        <div className="text-[10px] text-slate-500 font-mono truncate">
+                          {lastLoggedInUser.identifier}
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-xs font-black text-[#C48B28] group-hover:translate-x-0.5 transition-transform shrink-0 flex items-center gap-1">
+                      <span>Fill</span>
+                      <span>→</span>
+                    </span>
                   </button>
                 </div>
-              </div>
+              )}
 
               {/* Email or Phone Number */}
               <div>
@@ -670,7 +720,7 @@ export const AuthScreen: React.FC<Props> = ({
                     required
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="vinay8046d@gmail.com or +91 80887 11191"
+                    placeholder="name@example.com or +91 98765 43210"
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-3.5 py-2.5 text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-[#C48B28]"
                   />
                 </div>
@@ -713,21 +763,21 @@ export const AuthScreen: React.FC<Props> = ({
                 </div>
               </div>
 
-              {/* Login Button */}
+              {/* Single Customer Login Button */}
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-gradient-to-r from-[#5A3C0B] to-[#7A5212] hover:from-[#422C09] hover:to-[#5A3C0B] text-[#FFF5E1] font-black text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                className="w-full min-h-[48px] py-3.5 bg-[#C48B28] hover:bg-[#d99d33] active:bg-[#B37A1F] text-[#422C09] font-black text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed focus:outline-hidden focus:ring-2 focus:ring-[#C48B28]/50"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin text-[#C48B28]" />
+                    <Loader2 className="w-4 h-4 animate-spin text-[#422C09]" />
                     <span>Validating credentials...</span>
                   </>
                 ) : (
                   <>
-                    <span>Login</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <UserIcon className="w-4 h-4 text-[#422C09]" />
+                    <span>Customer Login</span>
                   </>
                 )}
               </button>
@@ -747,8 +797,9 @@ export const AuthScreen: React.FC<Props> = ({
                 </button>
               </div>
 
-              {/* Discreet Owner / Admin Login Access */}
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-center text-xs text-slate-500">
+              {/* Owner Login text link directly underneath Sign Up */}
+              <div className="text-center pt-1 text-xs">
+                <span className="text-slate-600">Are you the owner? </span>
                 <button
                   type="button"
                   onClick={() => {
@@ -757,10 +808,9 @@ export const AuthScreen: React.FC<Props> = ({
                     setPassword('');
                     setMode('owner-login');
                   }}
-                  className="flex items-center gap-1.5 text-slate-600 hover:text-[#5A3C0B] font-semibold cursor-pointer hover:underline transition-colors"
+                  className="font-bold text-[#C48B28] hover:underline cursor-pointer"
                 >
-                  <Store className="w-3.5 h-3.5 text-[#C48B28]" />
-                  <span>Are you a shop owner? Owner / Admin Login →</span>
+                  Owner Login
                 </button>
               </div>
             </form>
@@ -931,7 +981,7 @@ export const AuthScreen: React.FC<Props> = ({
                     required
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="vinay8046d@gmail.com or +91 80887 11191"
+                    placeholder="name@example.com or +91 98765 43210"
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-3.5 py-2.5 text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-[#C48B28]"
                   />
                 </div>
@@ -1032,29 +1082,57 @@ export const AuthScreen: React.FC<Props> = ({
           {/* ============================================================== */}
           {mode === 'owner-login' && (
             <form onSubmit={handleOwnerLoginSubmit} className="p-6 space-y-4">
-              {/* Owner Security Banner */}
-              <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-2.5 text-amber-900 text-xs">
-                <ShieldCheck className="w-4 h-4 text-[#C48B28] shrink-0 mt-0.5" />
-                <div>
-                  <div className="font-extrabold">Shopkeeper &amp; Staff Access Only</div>
-                  <div className="text-[11px] text-amber-800">
-                    Normal student users must not use this portal. Access is strictly audited.
+              {/* Owner Credentials Helper & 1-Click Access Card */}
+              <div className="p-3.5 bg-gradient-to-br from-amber-50 to-[#FFF5E1] border-2 border-[#C48B28]/50 rounded-2xl shadow-xs animate-fadeIn">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5 text-xs font-black text-[#5A3C0B]">
+                    <KeyRound className="w-4 h-4 text-[#C48B28]" />
+                    <span>Owner Login Credentials</span>
+                  </div>
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#5A3C0B] text-[#FFF5E1] tracking-wide">
+                    Authorized Access
+                  </span>
+                </div>
+
+                <p className="text-[11px] text-[#5A3C0B]/80 mb-2.5">
+                  Use the official shopkeeper login below or click one of the quick-fill buttons:
+                </p>
+
+                <div className="space-y-1.5 text-xs bg-white/95 p-2.5 rounded-xl border border-[#C48B28]/25 font-mono text-[#422C09]">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500 font-sans font-semibold">Owner ID:</span>
+                    <strong className="text-[#5A3C0B] select-all font-mono">admin@printease.com</strong>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500 font-sans font-semibold">Password:</span>
+                    <strong className="text-[#5A3C0B] select-all font-mono">admin123</strong>
+                  </div>
+                  <div className="pt-1.5 border-t border-slate-100 flex justify-between items-center text-[11px] text-slate-500 font-sans">
+                    <span>Developer / Co-Owner:</span>
+                    <span className="font-mono text-[#5A3C0B] font-semibold">vinay8046d@gmail.com</span>
                   </div>
                 </div>
-              </div>
 
-              {/* 1-Click Owner Demo Fill */}
-              <div className="flex items-center justify-between p-2.5 bg-[#FFF5E1]/80 border border-[#C48B28]/35 rounded-xl">
-                <span className="text-[11px] font-bold text-[#5A3C0B]">
-                  Demo Owner Account:
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleQuickFill('admin@printease.com', 'admin123')}
-                  className="px-2.5 py-1 bg-[#5A3C0B] text-[#FFF5E1] hover:bg-[#422C09] rounded-lg text-xs font-bold cursor-pointer transition-colors"
-                >
-                  Fill: admin123
-                </button>
+                {/* 1-Click Auto Fill Buttons */}
+                <div className="grid grid-cols-2 gap-2 mt-2.5">
+                  <button
+                    type="button"
+                    onClick={() => handleQuickFill('admin@printease.com', 'admin123')}
+                    className="py-2 px-2.5 bg-[#5A3C0B] hover:bg-[#422C09] text-[#FFF5E1] text-[11px] font-black rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer group hover:scale-[1.02]"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-[#C48B28]" />
+                    <span>Auto-fill Admin</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleQuickFill('vinay8046d@gmail.com', 'vinay123')}
+                    className="py-2 px-2.5 bg-white hover:bg-[#FFF5E1] text-[#5A3C0B] border border-[#C48B28]/50 text-[11px] font-black rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer group hover:scale-[1.02]"
+                  >
+                    <UserIcon className="w-3.5 h-3.5 text-[#C48B28]" />
+                    <span>Auto-fill Vinay</span>
+                  </button>
+                </div>
               </div>
 
               <div>
@@ -1068,7 +1146,7 @@ export const AuthScreen: React.FC<Props> = ({
                     required
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="admin@printease.com"
+                    placeholder="admin@printease.com (or admin)"
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-3.5 py-2.5 text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-[#C48B28]"
                   />
                 </div>
@@ -1101,7 +1179,7 @@ export const AuthScreen: React.FC<Props> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-gradient-to-r from-[#5A3C0B] to-[#7A5212] hover:from-[#422C09] hover:to-[#5A3C0B] text-[#FFF5E1] font-black text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                className="w-full min-h-[48px] py-3.5 bg-gradient-to-r from-[#5A3C0B] to-[#7A5212] hover:from-[#422C09] hover:to-[#5A3C0B] text-[#FFF5E1] font-black text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
               >
                 {loading ? (
                   <>
@@ -1116,7 +1194,9 @@ export const AuthScreen: React.FC<Props> = ({
                 )}
               </button>
 
-              <div className="text-center pt-2">
+              {/* Text link to return to Customer Login */}
+              <div className="text-center pt-2 text-xs">
+                <span className="text-slate-600">Are you a customer? </span>
                 <button
                   type="button"
                   onClick={() => {
@@ -1125,10 +1205,9 @@ export const AuthScreen: React.FC<Props> = ({
                     setPassword('');
                     setMode('user-login');
                   }}
-                  className="text-xs font-bold text-[#5A3C0B] hover:underline cursor-pointer flex items-center justify-center gap-1 mx-auto"
+                  className="font-bold text-[#C48B28] hover:underline cursor-pointer"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Return to Student / User Login</span>
+                  Customer Login
                 </button>
               </div>
             </form>
@@ -1187,7 +1266,7 @@ export const AuthScreen: React.FC<Props> = ({
                 <label className="block text-xs font-bold text-center text-[#5A3C0B] mb-2 uppercase tracking-wider">
                   Enter 6-Digit Verification Code
                 </label>
-                <div className="flex items-center justify-between gap-2 max-w-xs mx-auto">
+                <div className="flex items-center justify-between gap-1.5 sm:gap-2 max-w-xs mx-auto">
                   {otpDigits.map((digit, idx) => (
                     <input
                       key={idx}
@@ -1200,7 +1279,7 @@ export const AuthScreen: React.FC<Props> = ({
                       value={digit}
                       onChange={(e) => handleOtpChange(idx, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                      className="w-11 h-13 text-center text-xl font-black font-mono bg-slate-50 border-2 border-slate-300 rounded-xl focus:bg-white focus:border-[#C48B28] focus:ring-2 focus:ring-[#C48B28]/30 focus:outline-hidden transition-all text-slate-900"
+                      className="w-9 sm:w-11 h-12 sm:h-13 text-center text-lg sm:text-xl font-black font-mono bg-slate-50 border-2 border-slate-300 rounded-xl focus:bg-white focus:border-[#C48B28] focus:ring-2 focus:ring-[#C48B28]/30 focus:outline-hidden transition-all text-slate-900"
                     />
                   ))}
                 </div>

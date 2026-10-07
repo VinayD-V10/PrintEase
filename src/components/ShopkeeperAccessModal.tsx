@@ -25,7 +25,7 @@ export const ShopkeeperAccessModal: React.FC<Props> = ({
         </button>
         <div className="rounded-3xl overflow-hidden shadow-2xl">
           <AuthScreen
-            initialMode="owner-login"
+            initialMode="user-login"
             onAuthSuccess={(user, token) => {
               onSuccess(user, token);
               onClose();

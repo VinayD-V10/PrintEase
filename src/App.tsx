@@ -257,7 +257,7 @@ export default function App() {
   // Save portal preference and sync role-appropriate user session
   const handleSwitchPortal = (newPortal: PortalMode) => {
     if (newPortal === 'shopkeeper' && currentUser?.role !== 'admin' && currentUser?.role !== 'staff') {
-      setAuthInitialMode('owner-login');
+      setAuthInitialMode('user-login');
       setCurrentUser(null);
       return;
     }
@@ -341,6 +341,13 @@ export default function App() {
   const handleAuthSuccess = (user: User, token: string, targetPortal?: PortalMode) => {
     localStorage.setItem('printease_token', token);
     saveClientCurrentUser(user);
+    try {
+      localStorage.setItem('printease_last_logged_in_user', JSON.stringify({
+        name: user.name,
+        identifier: user.email || user.phone || user.name,
+        role: user.role,
+      }));
+    } catch {}
     setCurrentUser(user);
 
     const destPortal = targetPortal || ((user.role === 'admin' || user.role === 'staff') ? 'shopkeeper' : 'customer');
@@ -352,6 +359,7 @@ export default function App() {
   };
 
   const handleLogout = async () => {
+    const isOwnerSession = portal === 'shopkeeper' || currentUser?.role === 'admin' || currentUser?.role === 'staff';
     const token = localStorage.getItem('printease_token');
     if (token) {
       try {
@@ -617,6 +625,7 @@ export default function App() {
                 onViewReceipt={(ord) => setReceiptOrder(ord)}
                 shopStatus={shopStatus}
                 onUpdateShopStatus={handleUpdateShopStatus}
+                onLogout={handleLogout}
               />
             )}
 
@@ -676,18 +685,18 @@ export default function App() {
                 +91 98765 43210
               </span>
 
-              {/* In Customer view: discreet link to open Owner / Staff Portal */}
+              {/* In Customer view: link to login / portal */}
               {portal === 'customer' ? (
                 <button
                   onClick={() => {
                     setCurrentUser(null);
-                    setAuthInitialMode('owner-login');
+                    setAuthInitialMode('user-login');
                   }}
                   className="text-[#FFF5E1] hover:underline font-semibold transition-colors cursor-pointer flex items-center gap-1"
-                  title="Owner & Staff Secure Access"
+                  title="Campus Print Portal"
                 >
-                  <Store className="w-3.5 h-3.5 text-[#FFF5E1]" />
-                  <span>Shopkeeper &amp; Staff Console</span>
+                  <UserIcon className="w-3.5 h-3.5 text-[#FFF5E1]" />
+                  <span>Student &amp; Customer Portal</span>
                 </button>
               ) : (
                 <button

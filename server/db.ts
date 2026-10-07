@@ -139,10 +139,10 @@ function getInitialData(): DatabaseSchema {
   const vinayPwd = hashPassword('vinay123');
   const vinayUser: User & { password_hash: string; salt: string } = {
     id: 'usr_student_02',
-    name: 'Vinay',
+    name: 'Vinay (Owner)',
     email: 'vinay8046d@gmail.com',
     phone: '+91 80887 11191',
-    role: 'customer',
+    role: 'admin',
     status: 'active',
     created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
     password_hash: vinayPwd.hash,
@@ -746,6 +746,16 @@ class Database {
     if (user) {
       user.password_hash = password_hash;
       user.salt = salt;
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  public updateUserRole(userId: string, role: 'customer' | 'admin' | 'staff') {
+    const user = this.findUserById(userId);
+    if (user) {
+      user.role = role;
       this.save();
       return true;
     }
