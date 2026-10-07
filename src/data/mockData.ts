@@ -499,6 +499,262 @@ export function saveClientCurrentUser(user: User | null): void {
   } catch {}
 }
 
+export function findClientUserByIdentifier(identifier: string): StoredUserAccount | null {
+  const clean = identifier.trim().toLowerCase();
+  const digits = identifier.replace(/\D/g, '');
+  const allUsers = getClientRegisteredUsers();
+
+  const found = allUsers.find((u) => {
+    if (u.email && u.email.toLowerCase() === clean) return true;
+    if (u.phone) {
+      if (u.phone.trim() === identifier.trim()) return true;
+      const uDigits = u.phone.replace(/\D/g, '');
+      if (digits.length >= 7 && (uDigits.endsWith(digits) || digits.endsWith(uDigits))) return true;
+    }
+    return false;
+  });
+
+  return found || null;
+}
+
+export function maskDestination(identifier: string): string {
+  const trimmed = identifier.trim();
+  if (trimmed.includes('@')) {
+    const [name, domain] = trimmed.split('@');
+    if (name.length <= 2) return `${name}***@${domain}`;
+    return `${name.slice(0, 2)}***${name.slice(-1)}@${domain}`;
+  }
+  const digits = trimmed.replace(/\D/g, '');
+  if (digits.length >= 10) {
+    return `+91 ${digits.slice(0, 2)}••••••${digits.slice(-2)}`;
+  }
+  return `••••••${trimmed.slice(-3)}`;
+}
+
+// Client OTP storage
+interface ClientOtpRecord {
+  code: string;
+  identifier: string;
+  purpose: 'login' | 'signup' | 'forgot_password' | 'owner_login';
+  expires: number;
+  data?: any;
+}
+
+const STORAGE_ACTIVE_OTP_KEY = 'printease_active_otp_state';
+
+function getStoredOtpRecord(): ClientOtpRecord | null {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_ACTIVE_OTP_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return null;
+}
+
+function saveStoredOtpRecord(record: ClientOtpRecord | null): void {
+  try {
+    if (record) {
+      sessionStorage.setItem(STORAGE_ACTIVE_OTP_KEY, JSON.stringify(record));
+    } else {
+      sessionStorage.removeItem(STORAGE_ACTIVE_OTP_KEY);
+    }
+  } catch {}
+}
+
+export function clientRequestLoginOtp(
+  identifier: string,
+  password: string,
+  expectedRole?: 'customer' | 'admin'
+): { destination: string; otp: string; user: User } {
+  const user = findClientUserByIdentifier(identifier);
+  if (!user) {
+    // If not found and identifier is email, for demo convenience auto-create if not owner role
+    if (identifier.includes('@') && expectedRole !== 'admin') {
+      const namePart = identifier.split('@')[0];
+      const newUser = clientRegisterUser({
+        name: namePart.charAt(0).toUpperCase() + namePart.slice(1),
+        email: identifier.trim().toLowerCase(),
+        password: password || 'password123',
+      }).user;
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const record: ClientOtpRecord = {
+        code: otp,
+        identifier: identifier.trim().toLowerCase(),
+        purpose: 'login',
+        expires: Date.now() + 10 * 60 * 1000,
+        data: { user: newUser },
+      };
+      saveStoredOtpRecord(record);
+      return { destination: maskDestination(identifier), otp, user: newUser };
+    }
+    throw new Error('No registered account found with this email or phone number.');
+  }
+
+  if (expectedRole === 'admin' && user.role !== 'admin' && user.role !== 'staff') {
+    throw new Error('Access denied. This account does not have owner/staff privileges.');
+  }
+
+  if (user.password && user.password !== password) {
+    // Allow standard fallback passwords for demo ease
+    const isMaster =
+      (user.role === 'admin' && (password === 'admin123' || password === '1234')) ||
+      (user.email.includes('vinay') && password === 'vinay123') ||
+      (user.email.includes('student') && password === 'student123');
+    if (!isMaster) {
+      throw new Error('Invalid password. Please check and try again.');
+    }
+  }
+
+  const { password: _, ...safeUser } = user;
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const record: ClientOtpRecord = {
+    code: otp,
+    identifier: identifier.trim().toLowerCase(),
+    purpose: expectedRole === 'admin' ? 'owner_login' : 'login',
+    expires: Date.now() + 10 * 60 * 1000,
+    data: { user: safeUser },
+  };
+  saveStoredOtpRecord(record);
+
+  const destination = user.phone && !identifier.includes('@') ? user.phone : user.email;
+  return { destination: maskDestination(destination), otp, user: safeUser };
+}
+
+export function clientRequestSignupOtp(data: {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+}): { destination: string; otp: string } {
+  const existingEmail = findClientUserByIdentifier(data.email);
+  if (existingEmail) {
+    throw new Error('An account with this email address already exists. Please login.');
+  }
+
+  if (data.phone) {
+    const existingPhone = findClientUserByIdentifier(data.phone);
+    if (existingPhone) {
+      throw new Error('An account with this phone number already exists. Please login.');
+    }
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const record: ClientOtpRecord = {
+    code: otp,
+    identifier: data.email.trim().toLowerCase(),
+    purpose: 'signup',
+    expires: Date.now() + 10 * 60 * 1000,
+    data,
+  };
+  saveStoredOtpRecord(record);
+
+  return { destination: maskDestination(data.email), otp };
+}
+
+export function clientRequestForgotPasswordOtp(identifier: string): { destination: string; otp: string } {
+  const user = findClientUserByIdentifier(identifier);
+  if (!user) {
+    throw new Error('No account found associated with this email or phone number.');
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const record: ClientOtpRecord = {
+    code: otp,
+    identifier: identifier.trim().toLowerCase(),
+    purpose: 'forgot_password',
+    expires: Date.now() + 10 * 60 * 1000,
+    data: { user_id: user.id },
+  };
+  saveStoredOtpRecord(record);
+
+  const destination = user.phone && !identifier.includes('@') ? user.phone : user.email;
+  return { destination: maskDestination(destination), otp };
+}
+
+export function clientResendOtp(identifier: string): { destination: string; otp: string } {
+  const prev = getStoredOtpRecord();
+  const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+  const updated: ClientOtpRecord = {
+    code: newOtp,
+    identifier: identifier.trim().toLowerCase(),
+    purpose: prev?.purpose || 'login',
+    expires: Date.now() + 10 * 60 * 1000,
+    data: prev?.data,
+  };
+  saveStoredOtpRecord(updated);
+
+  return { destination: maskDestination(identifier), otp: newOtp };
+}
+
+export function clientVerifyOtp(
+  identifier: string,
+  enteredOtp: string,
+  purpose: 'login' | 'signup' | 'forgot_password' | 'owner_login',
+  newPassword?: string
+): { success: boolean; user?: User; token?: string; message?: string } {
+  const record = getStoredOtpRecord();
+  const trimmedOtp = enteredOtp.trim();
+
+  // Allow test OTP '123456' as well as the generated record code
+  const isValid =
+    trimmedOtp === '123456' ||
+    (record && record.code === trimmedOtp && record.expires > Date.now());
+
+  if (!isValid) {
+    throw new Error('Invalid or expired OTP code. Please enter the 6-digit code shown or click Resend.');
+  }
+
+  if (purpose === 'login' || purpose === 'owner_login') {
+    let user: User | null = record?.data?.user || null;
+    if (!user) {
+      const stored = findClientUserByIdentifier(identifier);
+      if (stored) {
+        const { password: _, ...safe } = stored;
+        user = safe;
+      }
+    }
+    if (!user) {
+      throw new Error('Could not resolve user session. Please try logging in again.');
+    }
+    const token = `pe_tok_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+    saveClientCurrentUser(user);
+    saveStoredOtpRecord(null);
+    return { success: true, user, token };
+  }
+
+  if (purpose === 'signup') {
+    const signupData = record?.data;
+    if (!signupData) {
+      throw new Error('Registration session expired. Please start registration again.');
+    }
+    const result = clientRegisterUser({
+      name: signupData.name,
+      email: signupData.email,
+      phone: signupData.phone,
+      password: signupData.password,
+    });
+    saveStoredOtpRecord(null);
+    return { success: true, user: result.user, token: result.token };
+  }
+
+  if (purpose === 'forgot_password') {
+    if (!newPassword || newPassword.length < 4) {
+      throw new Error('Please provide a valid new password (at least 4 characters).');
+    }
+    const user = findClientUserByIdentifier(identifier);
+    if (!user) {
+      throw new Error('User not found.');
+    }
+    const allUsers = getClientRegisteredUsers();
+    const updated = allUsers.map((u) => (u.id === user.id ? { ...u, password: newPassword } : u));
+    saveClientRegisteredUsers(updated);
+    saveStoredOtpRecord(null);
+    return { success: true, message: 'Password has been updated successfully.' };
+  }
+
+  saveStoredOtpRecord(null);
+  return { success: true };
+}
+
 export function clientAuthenticateUser(email: string, password: string): { user: User; token: string } {
   const normalizedEmail = email.trim().toLowerCase();
   const allUsers = getClientRegisteredUsers();
@@ -515,8 +771,6 @@ export function clientAuthenticateUser(email: string, password: string): { user:
     return { user: safeUser, token };
   }
 
-  // If user does not exist yet, automatically create their customer account
-  // so the user is never stuck with an error.
   const nameFromEmail = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ') || 'Student Customer';
   const newAccount: StoredUserAccount = {
     id: `usr_${Date.now()}`,

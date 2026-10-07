@@ -34,7 +34,6 @@ interface Props {
   shopStatus?: ShopStatusInfo | null;
   onOrderCreated: (order: Order) => void;
   onOpenAuth: () => void;
-  onSelectCustomerUser?: (user: User) => void;
 }
 
 export const UploadAndConfigure: React.FC<Props> = ({
@@ -43,7 +42,6 @@ export const UploadAndConfigure: React.FC<Props> = ({
   shopStatus,
   onOrderCreated,
   onOpenAuth,
-  onSelectCustomerUser,
 }) => {
   const [file, setFile] = useState<File | null>(null);
   const [uploadedFileData, setUploadedFileData] = useState<{
@@ -999,100 +997,23 @@ export const UploadAndConfigure: React.FC<Props> = ({
 
         {/* 3. CUSTOMER CONTACT DETAILS */}
         <div className="border-t border-slate-200 pt-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-            <label className="block text-sm font-bold text-slate-800 uppercase tracking-wide">
-              <span>3. Customer Information (For Pickup & Order ID)</span>
-            </label>
-            <div className="flex items-center gap-2">
-              {!currentUser ? (
-                <button
-                  type="button"
-                  onClick={onOpenAuth}
-                  className="text-xs font-semibold text-[#C48B28] hover:underline cursor-pointer"
-                >
-                  Already have an account? Sign in
-                </button>
-              ) : (
-                <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1">
-                  <span>Logged in as:</span>
-                  <strong className="font-extrabold">{currentUser.name}</strong>
-                  <span className="text-[10px] text-emerald-600">({currentUser.email})</span>
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* 1-Click Fast Customer Switcher */}
-          <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-3 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-            <div className="flex items-center gap-1.5 font-bold text-[#422C09]">
-              <UserIcon className="w-3.5 h-3.5 text-[#C48B28]" />
-              <span>Select Active Customer Account:</span>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  const vinayUser: User = {
-                    id: 'usr_student_02',
-                    name: 'Vinay',
-                    email: 'vinay8046d@gmail.com',
-                    phone: '+91 80887 11191',
-                    role: 'customer',
-                    status: 'active',
-                    created_at: new Date().toISOString(),
-                  };
-                  setCustomerName(vinayUser.name);
-                  setCustomerEmail(vinayUser.email);
-                  setCustomerPhone(vinayUser.phone);
-                  if (onSelectCustomerUser) onSelectCustomerUser(vinayUser);
-                }}
-                className={`px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1 cursor-pointer text-xs ${
-                  customerEmail === 'vinay8046d@gmail.com'
-                    ? 'bg-[#C48B28] text-white shadow-xs ring-2 ring-[#C48B28]/30 font-black'
-                    : 'bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 shadow-2xs'
-                }`}
-              >
-                <span>👤 Vinay</span>
-                <span className="text-[10px] opacity-80">(vinay8046d@gmail.com)</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  const aaravUser: User = {
-                    id: 'usr_student_01',
-                    name: 'Aarav Patel',
-                    email: 'student@college.edu',
-                    phone: '+91 91234 56789',
-                    role: 'customer',
-                    status: 'active',
-                    created_at: new Date().toISOString(),
-                  };
-                  setCustomerName(aaravUser.name);
-                  setCustomerEmail(aaravUser.email);
-                  setCustomerPhone(aaravUser.phone);
-                  if (onSelectCustomerUser) onSelectCustomerUser(aaravUser);
-                }}
-                className={`px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1 cursor-pointer text-xs ${
-                  customerEmail === 'student@college.edu'
-                    ? 'bg-[#C48B28] text-white shadow-xs ring-2 ring-[#C48B28]/30 font-black'
-                    : 'bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 shadow-2xs'
-                }`}
-              >
-                <span>🎓 Aarav Patel</span>
-                <span className="text-[10px] opacity-80">(student@college.edu)</span>
-              </button>
-
+          <label className="block text-sm font-bold text-slate-800 uppercase tracking-wide mb-3 flex items-center justify-between">
+            <span>3. Customer Information (For Pickup & Order ID)</span>
+            {!currentUser ? (
               <button
                 type="button"
                 onClick={onOpenAuth}
-                className="px-2.5 py-1.5 rounded-xl bg-amber-100/80 hover:bg-amber-200/80 text-[#5A3C0B] font-bold border border-amber-300 text-xs transition-colors cursor-pointer"
-                title="Login with custom email or register new account"
+                className="text-xs font-semibold text-[#C48B28] hover:underline cursor-pointer"
               >
-                + Different Login
+                Already have an account? Sign in
               </button>
-            </div>
-          </div>
+            ) : (
+              <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 flex items-center gap-1">
+                <span>Signed in:</span>
+                <strong className="font-extrabold">{currentUser.name}</strong>
+              </span>
+            )}
+          </label>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>

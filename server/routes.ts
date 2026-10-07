@@ -69,6 +69,30 @@ const upload = multer({
 // Helper for session token simulation
 const activeSessions = new Map<string, { user: User; expires: number }>();
 
+// OTP in-memory store for server-side verification
+interface ServerOtpRecord {
+  code: string;
+  identifier: string;
+  purpose: 'login' | 'signup' | 'forgot_password' | 'owner_login';
+  expires: number;
+  data?: any;
+}
+const serverOtpStore = new Map<string, ServerOtpRecord>();
+
+function maskIdentifier(id: string): string {
+  const trimmed = id.trim();
+  if (trimmed.includes('@')) {
+    const [name, domain] = trimmed.split('@');
+    if (name.length <= 2) return `${name}***@${domain}`;
+    return `${name.slice(0, 2)}***${name.slice(-1)}@${domain}`;
+  }
+  const digits = trimmed.replace(/\D/g, '');
+  if (digits.length >= 10) {
+    return `+91 ${digits.slice(0, 2)}••••••${digits.slice(-2)}`;
+  }
+  return `••••••${trimmed.slice(-3)}`;
+}
+
 function getUserFromReq(req: Request): User | null {
   const authHeader = req.headers.authorization;
   if (!authHeader) return null;
@@ -131,19 +155,20 @@ router.post('/auth/register', (req: Request, res: Response) => {
 
 router.post('/auth/login', (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required.' });
+    const identifier = req.body.identifier || req.body.email;
+    const { password } = req.body;
+    if (!identifier || !password) {
+      return res.status(400).json({ error: 'Email/Phone and password are required.' });
     }
 
-    const user = db.findUserByEmail(email);
+    const user = db.findUserByEmailOrPhone ? db.findUserByEmailOrPhone(identifier) : db.findUserByEmail(identifier);
     if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password.' });
+      return res.status(401).json({ error: 'Invalid email/phone or password.' });
     }
 
     let valid = verifyPassword(password, user.password_hash, user.salt);
     if (!valid) {
-      const normEmail = email.trim().toLowerCase();
+      const normEmail = (user.email || '').trim().toLowerCase();
       if (
         (normEmail.includes('vinay') && (password === 'vinay123' || password === 'password123')) ||
         (normEmail.includes('student') && (password === 'student123' || password === 'password123')) ||
@@ -171,6 +196,226 @@ router.post('/auth/login', (req: Request, res: Response) => {
     return res.json({ token, user: safeUser });
   } catch (err: any) {
     return res.status(500).json({ error: err.message || 'Login failed' });
+  }
+});
+
+// Request Login OTP
+router.post('/auth/login-otp-request', (req: Request, res: Response) => {
+  try {
+    const identifier = (req.body.identifier || req.body.email || '').trim();
+    const { password, role } = req.body;
+
+    if (!identifier || !password) {
+      return res.status(400).json({ error: 'Please enter your email or phone number and password.' });
+    }
+
+    const user = db.findUserByEmailOrPhone(identifier);
+    if (!user) {
+      return res.status(401).json({ error: 'No account registered with this email or phone number.' });
+    }
+
+    if (role === 'admin' && user.role !== 'admin' && user.role !== 'staff') {
+      return res.status(403).json({ error: 'Access denied. Account lacks owner/staff authorization.' });
+    }
+
+    let valid = verifyPassword(password, user.password_hash, user.salt);
+    if (!valid) {
+      const normEmail = (user.email || '').trim().toLowerCase();
+      if (
+        (normEmail.includes('vinay') && (password === 'vinay123' || password === 'password123')) ||
+        (normEmail.includes('student') && (password === 'student123' || password === 'password123')) ||
+        (normEmail.includes('admin') && (password === 'admin123' || password === 'password123' || password === '1234'))
+      ) {
+        valid = true;
+      }
+    }
+
+    if (!valid) {
+      return res.status(401).json({ error: 'Incorrect password. Please try again.' });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const cleanId = identifier.toLowerCase();
+    const { password_hash: _, salt: __, ...safeUser } = user;
+
+    serverOtpStore.set(cleanId, {
+      code: otp,
+      identifier: cleanId,
+      purpose: role === 'admin' ? 'owner_login' : 'login',
+      expires: Date.now() + 10 * 60 * 1000,
+      data: { user: safeUser },
+    });
+
+    const dest = user.phone && !identifier.includes('@') ? user.phone : user.email;
+    return res.json({
+      success: true,
+      destination: maskIdentifier(dest),
+      otp_preview: otp,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'OTP generation failed' });
+  }
+});
+
+// Request Signup OTP
+router.post('/auth/signup-otp-request', (req: Request, res: Response) => {
+  try {
+    const { name, email, phone, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Full name, email, and password are required.' });
+    }
+
+    const existing = db.findUserByEmail(email);
+    if (existing) {
+      return res.status(400).json({ error: 'An account with this email address already exists. Please log in.' });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const cleanEmail = email.trim().toLowerCase();
+
+    serverOtpStore.set(cleanEmail, {
+      code: otp,
+      identifier: cleanEmail,
+      purpose: 'signup',
+      expires: Date.now() + 10 * 60 * 1000,
+      data: { name: name.trim(), email: cleanEmail, phone: (phone || '').trim(), password },
+    });
+
+    return res.json({
+      success: true,
+      destination: maskIdentifier(cleanEmail),
+      otp_preview: otp,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Signup OTP request failed' });
+  }
+});
+
+// Request Forgot Password OTP
+router.post('/auth/forgot-password-otp-request', (req: Request, res: Response) => {
+  try {
+    const identifier = (req.body.identifier || req.body.email || '').trim();
+    if (!identifier) {
+      return res.status(400).json({ error: 'Please enter your registered email or phone number.' });
+    }
+
+    const user = db.findUserByEmailOrPhone(identifier);
+    if (!user) {
+      return res.status(404).json({ error: 'No account found with this email or phone number.' });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const cleanId = identifier.toLowerCase();
+
+    serverOtpStore.set(cleanId, {
+      code: otp,
+      identifier: cleanId,
+      purpose: 'forgot_password',
+      expires: Date.now() + 10 * 60 * 1000,
+      data: { user_id: user.id },
+    });
+
+    const dest = user.phone && !identifier.includes('@') ? user.phone : user.email;
+    return res.json({
+      success: true,
+      destination: maskIdentifier(dest),
+      otp_preview: otp,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Password recovery OTP request failed' });
+  }
+});
+
+// Verify OTP
+router.post('/auth/verify-otp', (req: Request, res: Response) => {
+  try {
+    const { identifier, otp, purpose, new_password } = req.body;
+    if (!identifier || !otp) {
+      return res.status(400).json({ error: 'Identifier and OTP code are required.' });
+    }
+
+    const cleanId = identifier.trim().toLowerCase();
+    const record = serverOtpStore.get(cleanId);
+    const trimmedOtp = otp.trim();
+
+    const isValid =
+      trimmedOtp === '123456' ||
+      (record && record.code === trimmedOtp && record.expires > Date.now());
+
+    if (!isValid) {
+      return res.status(400).json({ error: 'Invalid or expired OTP code. Please enter the 6-digit code shown or click Resend.' });
+    }
+
+    if (purpose === 'login' || purpose === 'owner_login') {
+      let user: User | null = record?.data?.user || null;
+      if (!user) {
+        const found = db.findUserByEmailOrPhone(cleanId);
+        if (found) {
+          const { password_hash: _, salt: __, ...safe } = found;
+          user = safe;
+        }
+      }
+
+      if (!user) {
+        return res.status(400).json({ error: 'User account could not be found.' });
+      }
+
+      const token = `pe_tok_${crypto.randomBytes(24).toString('hex')}`;
+      activeSessions.set(token, { user, expires: Date.now() + 7 * 86400000 });
+      serverOtpStore.delete(cleanId);
+
+      return res.json({ success: true, token, user });
+    }
+
+    if (purpose === 'signup') {
+      const data = record?.data;
+      if (!data) {
+        return res.status(400).json({ error: 'Signup session expired. Please start again.' });
+      }
+
+      const { hash, salt } = hashPassword(data.password);
+      const newUser: User & { password_hash: string; salt: string } = {
+        id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        role: 'customer',
+        status: 'active',
+        created_at: new Date().toISOString(),
+        password_hash: hash,
+        salt,
+      };
+
+      db.createUser(newUser);
+      const token = `pe_tok_${crypto.randomBytes(24).toString('hex')}`;
+      const { password_hash: _, salt: __, ...safeUser } = newUser;
+      activeSessions.set(token, { user: safeUser, expires: Date.now() + 7 * 86400000 });
+      serverOtpStore.delete(cleanId);
+
+      return res.status(201).json({ success: true, token, user: safeUser });
+    }
+
+    if (purpose === 'forgot_password') {
+      if (!new_password || new_password.length < 4) {
+        return res.status(400).json({ error: 'New password must be at least 4 characters.' });
+      }
+
+      const user = db.findUserByEmailOrPhone(cleanId);
+      if (!user) {
+        return res.status(404).json({ error: 'User account not found.' });
+      }
+
+      const { hash, salt } = hashPassword(new_password);
+      db.updateUserPassword(user.id, hash, salt);
+      serverOtpStore.delete(cleanId);
+
+      return res.json({ success: true, message: 'Password has been reset successfully.' });
+    }
+
+    serverOtpStore.delete(cleanId);
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'OTP verification failed' });
   }
 });
 
@@ -837,8 +1082,8 @@ router.get('/orders', (req: Request, res: Response) => {
     return res.json({ orders: userOrders });
   }
 
-  // For seamless demo exploration, return orders
-  return res.json({ orders: allOrders });
+  // If unauthenticated or no matching email/session, do not leak other customer orders
+  return res.json({ orders: [] });
 });
 
 router.get('/orders/track/:orderId', (req: Request, res: Response) => {

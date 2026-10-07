@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Printer,
   Bell,
@@ -23,6 +23,7 @@ import {
   CreditCard,
   Check,
   Sparkles,
+  ShieldCheck,
 } from 'lucide-react';
 import { User, NotificationItem, ShopStatusInfo } from '../types/printease';
 import { StatusBlinkDot } from './StatusBlinkDot';
@@ -50,7 +51,6 @@ interface NavbarProps {
   shopStatus?: ShopStatusInfo | null;
   walletBalance?: number;
   onOpenShopStatusControl?: () => void;
-  onSelectCustomerUser?: (user: User) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -71,10 +71,23 @@ export const Navbar: React.FC<NavbarProps> = ({
   shopStatus,
   walletBalance = 250,
   onOpenShopStatusControl,
-  onSelectCustomerUser,
 }) => {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const isShopOpen = shopStatus ? shopStatus.status === 'OPEN' : true;
+
+  // Auto-close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowUserDropdown(false);
+      }
+    }
+    if (showUserDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showUserDropdown]);
 
   // ==========================================
   // 1. SHOPKEEPER / OWNER NAVBAR
@@ -210,32 +223,24 @@ export const Navbar: React.FC<NavbarProps> = ({
                 )}
               </button>
 
-              {/* Global Interface Switcher: User Interface vs Owner Interface */}
-              <div className="flex items-center bg-[#2E1C05] p-1 rounded-2xl border border-[#C48B28]/40 shadow-inner">
+              {/* Owner Portal Active Indicator */}
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-[#352206] text-[#EBC176] rounded-xl border border-[#C48B28]/40 text-xs font-bold shadow-xs">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#C48B28]" />
+                <span>Owner Console</span>
+              </div>
+
+              {/* View Student Portal for Authorized Owner */}
+              {onSwitchPortal && (
                 <button
                   type="button"
-                  onClick={() => {
-                    if (onSwitchPortal) onSwitchPortal('customer');
-                    else onExitToCustomer();
-                  }}
-                  className="px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 text-[#FFF5E1]/80 hover:text-white hover:bg-[#C48B28]/25"
-                  title="Switch to User Interface (Customer & Student Portal)"
+                  onClick={() => onSwitchPortal('customer')}
+                  className="px-3 py-1.5 bg-[#2E1C05] hover:bg-[#3D2507] text-[#FFF5E1]/85 hover:text-white rounded-xl text-xs font-bold border border-[#C48B28]/30 transition-all cursor-pointer flex items-center gap-1.5"
+                  title="View Student Portal"
                 >
                   <UserIcon className="w-3.5 h-3.5 text-[#C48B28]" />
-                  <span className="hidden sm:inline">User Interface</span>
-                  <span className="sm:hidden">User</span>
+                  <span className="hidden md:inline">View Student App</span>
                 </button>
-                <button
-                  type="button"
-                  disabled
-                  className="px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-black bg-[#C48B28] text-[#FFF5E1] shadow-md ring-1 ring-[#FFF5E1]/30 flex items-center gap-1.5 cursor-default"
-                  title="Currently in Owner Interface"
-                >
-                  <Store className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Owner Interface</span>
-                  <span className="sm:hidden">Owner</span>
-                </button>
-              </div>
+              )}
 
               {/* Owner Profile / Logout */}
               {currentUser && (
@@ -476,51 +481,25 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </button>
 
-            {/* Global Interface Switcher: User Interface vs Owner Interface */}
-            <div className="flex items-center bg-[#2E1C05] p-1 rounded-2xl border border-[#C48B28]/40 shadow-inner">
-              <button
-                type="button"
-                disabled
-                className="px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-black bg-[#C48B28] text-[#FFF5E1] shadow-md ring-1 ring-[#FFF5E1]/30 flex items-center gap-1.5 cursor-default"
-                title="Currently in User Interface"
-              >
-                <UserIcon className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">User Interface</span>
-                <span className="sm:hidden">User</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (onSwitchPortal) onSwitchPortal('shopkeeper');
-                  else onOpenShopkeeperLogin();
-                }}
-                className="px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 text-[#FFF5E1]/80 hover:text-white hover:bg-[#C48B28]/25"
-                title="Switch to Owner Interface (Shopkeeper Console)"
-              >
-                <Store className="w-3.5 h-3.5 text-[#C48B28]" />
-                <span className="hidden sm:inline">Owner Interface</span>
-                <span className="sm:hidden">Owner</span>
-              </button>
-            </div>
-
-            {/* Customer User Account & 1-Click Profile Switcher */}
-            <div className="relative">
+            {/* Customer User Account */}
+            <div ref={dropdownRef} className="relative">
               {currentUser ? (
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => setShowUserDropdown(!showUserDropdown)}
                     className="flex items-center gap-2 px-3 py-1.5 bg-[#352206] hover:bg-[#4E320A] border border-[#C48B28]/40 rounded-xl text-xs cursor-pointer transition-all shadow-xs"
-                    title="Click to Switch Customer Account"
+                    title="Account Profile"
+                    aria-expanded={showUserDropdown}
                   >
                     <div className="w-6 h-6 rounded-lg bg-[#C48B28] text-[#FFF5E1] flex items-center justify-center font-black text-[11px]">
-                      {currentUser.name.charAt(0).toUpperCase()}
+                      {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
                     </div>
                     <div className="hidden sm:block text-left leading-tight">
-                      <div className="font-extrabold text-[#FFF5E1] text-xs truncate max-w-[110px]">
+                      <div className="font-extrabold text-[#FFF5E1] text-xs truncate max-w-[120px]">
                         {currentUser.name}
                       </div>
-                      <div className="text-[10px] text-[#C48B28] font-mono truncate max-w-[110px]">
+                      <div className="text-[10px] text-[#C48B28] font-mono truncate max-w-[120px]">
                         {currentUser.email}
                       </div>
                     </div>
@@ -541,105 +520,48 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className="btn-smooth btn-dual-shimmer px-3.5 py-2 rounded-xl text-[#FFF5E1] text-xs font-bold shadow-sm flex items-center gap-1.5 cursor-pointer"
                 >
                   <UserIcon className="w-3.5 h-3.5 text-[#FFF5E1]" />
-                  <span>Sign In</span>
+                  <span>Sign In / Register</span>
                 </button>
               )}
 
-              {/* Fast 1-Click Customer Switcher Dropdown */}
-              {showUserDropdown && (
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-slate-200 py-3 px-3 z-50 text-slate-800 animate-fadeIn">
-                  <div className="pb-2 mb-2 border-b border-slate-100 flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">
-                        Active User
-                      </span>
-                      <strong className="text-xs text-slate-900 block truncate font-extrabold">
-                        {currentUser?.name || 'Customer'}
-                      </strong>
-                      <span className="text-[10px] text-slate-500 font-mono block truncate">
-                        {currentUser?.email || ''}
+              {/* Authenticated User Profile Dropdown (Shows ONLY currently logged-in user) */}
+              {showUserDropdown && currentUser && (
+                <div className="absolute right-0 mt-2 w-72 sm:w-80 max-w-[calc(100vw-1.5rem)] bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 z-50 text-slate-800 animate-fadeIn">
+                  {/* Current User Card */}
+                  <div className="pb-3 border-b border-slate-100">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#5A3C0B] to-[#7A5212] text-[#FFF5E1] flex items-center justify-center font-black text-base shadow-xs shrink-0">
+                          {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+                        </div>
+                        <div className="min-w-0">
+                          <strong className="text-sm text-slate-900 block truncate font-extrabold leading-tight">
+                            {currentUser.name}
+                          </strong>
+                          <span className="text-xs text-slate-500 font-mono block truncate mt-0.5">
+                            {currentUser.email}
+                          </span>
+                        </div>
+                      </div>
+                      <Check className="w-4 h-4 text-[#C48B28] shrink-0 mt-1" />
+                    </div>
+
+                    <div className="mt-3">
+                      <span className="px-2.5 py-1 rounded-md bg-[#FFF5E1] text-[#5A3C0B] border border-[#C48B28]/30 text-xs font-bold">
+                        {currentUser.role === 'customer' ? 'Customer' : currentUser.role}
                       </span>
                     </div>
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">
-                      Customer
-                    </span>
                   </div>
 
-                  <span className="text-[11px] font-bold text-slate-700 block mb-1.5 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-[#C48B28]" />
-                    <span>Switch Customer Account:</span>
-                  </span>
-
-                  <div className="space-y-1 mb-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const vinayUser: User = {
-                          id: 'usr_student_02',
-                          name: 'Vinay',
-                          email: 'vinay8046d@gmail.com',
-                          phone: '+91 80887 11191',
-                          role: 'customer',
-                          status: 'active',
-                          created_at: new Date().toISOString(),
-                        };
-                        if (onSelectCustomerUser) onSelectCustomerUser(vinayUser);
-                        setShowUserDropdown(false);
-                      }}
-                      className={`w-full px-2.5 py-1.5 rounded-xl text-left text-xs flex items-center justify-between transition-colors cursor-pointer ${
-                        currentUser?.email === 'vinay8046d@gmail.com'
-                          ? 'bg-[#C48B28]/15 text-[#5A3C0B] font-extrabold border border-[#C48B28]/30'
-                          : 'hover:bg-slate-100 text-slate-700'
-                      }`}
-                    >
-                      <div className="truncate">
-                        <span className="font-bold block text-xs">👤 Vinay</span>
-                        <span className="text-[10px] text-slate-500 font-mono">vinay8046d@gmail.com</span>
-                      </div>
-                      {currentUser?.email === 'vinay8046d@gmail.com' && (
-                        <Check className="w-3.5 h-3.5 text-[#C48B28] shrink-0" />
-                      )}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const aaravUser: User = {
-                          id: 'usr_student_01',
-                          name: 'Aarav Patel',
-                          email: 'student@college.edu',
-                          phone: '+91 91234 56789',
-                          role: 'customer',
-                          status: 'active',
-                          created_at: new Date().toISOString(),
-                        };
-                        if (onSelectCustomerUser) onSelectCustomerUser(aaravUser);
-                        setShowUserDropdown(false);
-                      }}
-                      className={`w-full px-2.5 py-1.5 rounded-xl text-left text-xs flex items-center justify-between transition-colors cursor-pointer ${
-                        currentUser?.email === 'student@college.edu'
-                          ? 'bg-[#C48B28]/15 text-[#5A3C0B] font-extrabold border border-[#C48B28]/30'
-                          : 'hover:bg-slate-100 text-slate-700'
-                      }`}
-                    >
-                      <div className="truncate">
-                        <span className="font-bold block text-xs">🎓 Aarav Patel</span>
-                        <span className="text-[10px] text-slate-500 font-mono">student@college.edu</span>
-                      </div>
-                      {currentUser?.email === 'student@college.edu' && (
-                        <Check className="w-3.5 h-3.5 text-[#C48B28] shrink-0" />
-                      )}
-                    </button>
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                  {/* Dropdown Footer Actions */}
+                  <div className="pt-3 space-y-2 text-xs">
                     <button
                       type="button"
                       onClick={() => {
                         setShowUserDropdown(false);
                         onOpenAuth();
                       }}
-                      className="text-[#C48B28] font-bold hover:underline cursor-pointer flex items-center gap-1"
+                      className="w-full text-left text-[#C48B28] font-bold hover:underline cursor-pointer flex items-center gap-1.5 py-1"
                     >
                       <span>+ Sign In / Register</span>
                     </button>
@@ -650,7 +572,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         setShowUserDropdown(false);
                         onLogout();
                       }}
-                      className="text-rose-600 font-semibold hover:underline cursor-pointer"
+                      className="w-full text-left text-rose-600 font-bold hover:text-rose-700 hover:underline cursor-pointer py-1"
                     >
                       Sign Out
                     </button>

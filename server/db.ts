@@ -136,6 +136,19 @@ function getInitialData(): DatabaseSchema {
     salt: studentPwd.salt,
   };
 
+  const vinayPwd = hashPassword('vinay123');
+  const vinayUser: User & { password_hash: string; salt: string } = {
+    id: 'usr_student_02',
+    name: 'Vinay',
+    email: 'vinay8046d@gmail.com',
+    phone: '+91 80887 11191',
+    role: 'customer',
+    status: 'active',
+    created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
+    password_hash: vinayPwd.hash,
+    salt: vinayPwd.salt,
+  };
+
   const sampleFile1: UploadedFileRecord = {
     id: 'file_sample_01',
     original_name: 'Final_Year_Project_Report.pdf',
@@ -416,6 +429,15 @@ function getInitialData(): DatabaseSchema {
       created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
       updated_at: new Date().toISOString(),
     },
+    {
+      id: 'wlt_student_02',
+      user_id: 'usr_student_02',
+      balance: 350.0,
+      currency: 'INR',
+      status: 'active',
+      created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
+      updated_at: new Date().toISOString(),
+    },
   ];
 
   const sampleWalletTransactions: WalletTransaction[] = [
@@ -463,7 +485,7 @@ function getInitialData(): DatabaseSchema {
   ];
 
   return {
-    users: [adminUser, studentUser],
+    users: [adminUser, studentUser, vinayUser],
     pricing: defaultPricing,
     uploaded_files: [sampleFile1, sampleFile2, sampleFile3],
     orders: sampleOrders,
@@ -619,6 +641,36 @@ class Database {
         if (!parsed.wallet_transactions) {
           parsed.wallet_transactions = [];
         }
+
+        // Ensure all seed users (Vinay, Aarav, Rajesh) exist
+        const initial = getInitialData();
+        let updated = false;
+        if (!Array.isArray(parsed.users)) {
+          parsed.users = initial.users;
+          updated = true;
+        } else {
+          for (const seedUser of initial.users) {
+            const hasUser = parsed.users.some(
+              (u: any) => u.email.toLowerCase() === seedUser.email.toLowerCase()
+            );
+            if (!hasUser) {
+              parsed.users.push(seedUser);
+              updated = true;
+            }
+          }
+        }
+
+        for (const seedWallet of (initial.wallets || [])) {
+          if (!parsed.wallets.some((w: any) => w.user_id === seedWallet.user_id)) {
+            parsed.wallets.push(seedWallet);
+            updated = true;
+          }
+        }
+
+        if (updated) {
+          this.save(parsed);
+        }
+
         return parsed;
       }
     } catch (err) {
@@ -665,6 +717,20 @@ class Database {
     return this.data.users.find((u) => u.email.toLowerCase() === lower);
   }
 
+  public findUserByEmailOrPhone(identifier: string) {
+    const clean = identifier.trim().toLowerCase();
+    const digits = identifier.replace(/\D/g, '');
+    return this.data.users.find((u) => {
+      if (u.email && u.email.toLowerCase() === clean) return true;
+      if (u.phone) {
+        if (u.phone === identifier.trim()) return true;
+        const uDigits = u.phone.replace(/\D/g, '');
+        if (digits.length >= 7 && (uDigits.endsWith(digits) || digits.endsWith(uDigits))) return true;
+      }
+      return false;
+    });
+  }
+
   public findUserById(id: string) {
     return this.data.users.find((u) => u.id === id);
   }
@@ -673,6 +739,17 @@ class Database {
     this.data.users.push(user);
     this.save();
     return user;
+  }
+
+  public updateUserPassword(userId: string, password_hash: string, salt: string) {
+    const user = this.findUserById(userId);
+    if (user) {
+      user.password_hash = password_hash;
+      user.salt = salt;
+      this.save();
+      return true;
+    }
+    return false;
   }
 
   // --- Pricing ---
@@ -1037,14 +1114,18 @@ class Database {
 
   // --- Notifications ---
   public getNotifications(role?: string, email?: string) {
+    const cleanEmail = email?.trim().toLowerCase();
     return this.data.notifications.filter((n) => {
       if (role === 'admin' || role === 'owner') {
         return n.recipient_role === 'owner' || n.recipient_role === 'all';
       }
-      if (email && n.recipient_email && n.recipient_email.toLowerCase() === email.toLowerCase()) {
-        return true;
+      if (cleanEmail) {
+        if (n.recipient_email) {
+          return n.recipient_email.toLowerCase() === cleanEmail;
+        }
+        return n.recipient_role === 'all';
       }
-      return n.recipient_role === 'customer' || n.recipient_role === 'all';
+      return false;
     });
   }
 

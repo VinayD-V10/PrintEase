@@ -33,6 +33,7 @@ import { ShopkeeperAccessModal } from './components/ShopkeeperAccessModal';
 import { ShopStatusControlModal } from './components/ShopStatusControlModal';
 import { PhpReferenceModal } from './components/PhpReferenceModal';
 import { NotificationDrawer } from './components/NotificationDrawer';
+import { AuthScreen, AuthMode } from './components/AuthScreen';
 import {
   Order,
   PricingSettings,
@@ -53,8 +54,6 @@ import {
   saveClientStoredWalletTxs,
   getClientCurrentUser,
   saveClientCurrentUser,
-  getClientActiveCustomerUser,
-  saveClientActiveCustomerUser,
   getClientActiveOwnerUser,
   saveClientActiveOwnerUser,
   DEFAULT_PRICING,
@@ -139,14 +138,13 @@ export default function App() {
   const [wallet, setWallet] = useState<Wallet>(getClientStoredWallet);
   const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>(getClientStoredWalletTxs);
 
+  const [authInitialMode, setAuthInitialMode] = useState<AuthMode>('user-login');
+
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    const savedPortal = localStorage.getItem('printease_portal_mode');
-    if (savedPortal === 'shopkeeper') {
-      return getClientActiveOwnerUser();
-    }
+    const token = localStorage.getItem('printease_token');
+    if (!token) return null;
     const stored = getClientCurrentUser();
-    if (stored && stored.role === 'customer') return stored;
-    return getClientActiveCustomerUser();
+    return stored || null;
   });
   const [pricing, setPricing] = useState<PricingSettings>(DEFAULT_PRICING);
   const [orders, setOrders] = useState<Order[]>(getClientStoredOrders);
@@ -163,6 +161,14 @@ export default function App() {
   const [showShopStatusModal, setShowShopStatusModal] = useState(false);
   const [showPhpModal, setShowPhpModal] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+
+  // Security Guard: Prevent normal customer accounts from ever viewing shopkeeper console
+  useEffect(() => {
+    if (currentUser && currentUser.role === 'customer' && portal === 'shopkeeper') {
+      setPortal('customer');
+      localStorage.setItem('printease_portal_mode', 'customer');
+    }
+  }, [currentUser, portal]);
 
   // 1. Fetch Shop Status
   const fetchShopStatus = async () => {
@@ -218,14 +224,12 @@ export default function App() {
     fetchShopStatus();
     fetchWallet();
 
-    // Check saved session
-    const storedUser = getClientCurrentUser();
-    if (storedUser) {
-      setCurrentUser(storedUser);
-    }
-
     const token = localStorage.getItem('printease_token');
     if (token) {
+      const storedUser = getClientCurrentUser();
+      if (storedUser) {
+        setCurrentUser(storedUser);
+      }
       fetch('/api/auth/me', {
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -245,35 +249,21 @@ export default function App() {
         .catch(() => {
           // Do not delete offline session on static hosts
         });
+    } else {
+      setCurrentUser(null);
     }
   }, []);
 
   // Save portal preference and sync role-appropriate user session
   const handleSwitchPortal = (newPortal: PortalMode) => {
+    if (newPortal === 'shopkeeper' && currentUser?.role !== 'admin' && currentUser?.role !== 'staff') {
+      setAuthInitialMode('owner-login');
+      setCurrentUser(null);
+      return;
+    }
     setPortal(newPortal);
     localStorage.setItem('printease_portal_mode', newPortal);
-
-    // Switch active user cleanly so user never gets wrong credentials or role
-    if (newPortal === 'customer') {
-      const cust = getClientActiveCustomerUser();
-      setCurrentUser(cust);
-      saveClientCurrentUser(cust);
-    } else {
-      const owner = getClientActiveOwnerUser();
-      setCurrentUser(owner);
-      saveClientCurrentUser(owner);
-    }
-
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Quick 1-click active customer account selection (Vinay or Aarav)
-  const handleSelectCustomerUser = (user: User) => {
-    saveClientActiveCustomerUser(user);
-    saveClientCurrentUser(user);
-    setCurrentUser(user);
-    fetchOrdersAndNotifications();
-    fetchWallet();
   };
 
   // 4. Fetch Orders & Notifications with smart alert filtering
@@ -352,13 +342,11 @@ export default function App() {
     localStorage.setItem('printease_token', token);
     saveClientCurrentUser(user);
     setCurrentUser(user);
-    if (targetPortal) {
-      handleSwitchPortal(targetPortal);
-    } else if (user.role === 'admin' || user.role === 'staff') {
-      handleSwitchPortal('shopkeeper');
-    } else {
-      handleSwitchPortal('customer');
-    }
+
+    const destPortal = targetPortal || ((user.role === 'admin' || user.role === 'staff') ? 'shopkeeper' : 'customer');
+    setPortal(destPortal);
+    localStorage.setItem('printease_portal_mode', destPortal);
+
     fetchOrdersAndNotifications();
     fetchWallet();
   };
@@ -376,9 +364,9 @@ export default function App() {
     localStorage.removeItem('printease_token');
     saveClientCurrentUser(null);
     setCurrentUser(null);
-    handleSwitchPortal('customer');
-    fetchOrdersAndNotifications();
-    fetchWallet();
+    setAuthInitialMode('user-login');
+    setPortal('customer');
+    localStorage.setItem('printease_portal_mode', 'customer');
   };
 
   // Update Shop Status Handler
@@ -447,6 +435,16 @@ export default function App() {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
+  // Professional Full-Page Authentication Gate when user is not logged in
+  if (!currentUser) {
+    return (
+      <AuthScreen
+        initialMode={authInitialMode}
+        onAuthSuccess={handleAuthSuccess}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#FFF5E1] text-[#5A3C0B] flex flex-col antialiased selection:bg-[#5A3C0B] selection:text-[#FFF5E1]">
       {/* Dynamic Navbar: Strict separation between Customer & Shopkeeper */}
@@ -475,7 +473,6 @@ export default function App() {
         shopStatus={shopStatus}
         walletBalance={wallet ? Number(wallet.balance) : 250}
         onOpenShopStatusControl={() => setShowShopStatusModal(true)}
-        onSelectCustomerUser={handleSelectCustomerUser}
       />
 
       {/* Main Content Area */}
@@ -525,7 +522,6 @@ export default function App() {
                   setReviewOrder(lockedOrder);
                 }}
                 onOpenAuth={() => setShowAuth(true)}
-                onSelectCustomerUser={handleSelectCustomerUser}
               />
             )}
 
@@ -680,14 +676,18 @@ export default function App() {
                 +91 98765 43210
               </span>
 
-              {/* In Customer view: discreet link to open Shopkeeper Desk */}
+              {/* In Customer view: discreet link to open Owner / Staff Portal */}
               {portal === 'customer' ? (
                 <button
-                  onClick={() => setShowShopkeeperModal(true)}
+                  onClick={() => {
+                    setCurrentUser(null);
+                    setAuthInitialMode('owner-login');
+                  }}
                   className="text-[#FFF5E1] hover:underline font-semibold transition-colors cursor-pointer flex items-center gap-1"
+                  title="Owner & Staff Secure Access"
                 >
                   <Store className="w-3.5 h-3.5 text-[#FFF5E1]" />
-                  <span>Shopkeeper Portal</span>
+                  <span>Shopkeeper &amp; Staff Console</span>
                 </button>
               ) : (
                 <button
