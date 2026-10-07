@@ -12,6 +12,9 @@ const getBasePath = () => {
   // When running inside GitHub Actions workflow for Pages
   if (process.env.GITHUB_REPOSITORY) {
     const repoName = process.env.GITHUB_REPOSITORY.split('/')[1];
+    if (repoName && repoName.toLowerCase().endsWith('.github.io')) {
+      return '/';
+    }
     return repoName ? `/${repoName}/` : './';
   }
   // Default relative base: universal compatibility across subdirectories & custom domains
