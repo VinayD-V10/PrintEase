@@ -1,0 +1,52 @@
+{
+  "name": "react-example",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx server.ts",
+    "build:server": "esbuild server/app.ts --bundle --platform=node --target=node20 --format=esm --packages=external --outfile=api/index.js",
+    "build": "vite build && node scripts/prepare-pages.cjs && npm run build:server",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist",
+    "start": "tsx server.ts",
+    "preview": "vite preview",
+    "clean": "rm -rf dist docs server.js",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@google/genai": "^2.4.0",
+    "@supabase/supabase-js": "^2.118.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@vitejs/plugin-react": "^6.1.1",
+    "canvas-confetti": "^1.9.4",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^5.3.0",
+    "lucide-react": "^0.546.0",
+    "motion": "^12.23.24",
+    "multer": "^2.5.0",
+    "pdf-lib": "^1.17.1",
+    "razorpay": "^2.9.8",
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1",
+    "tsx": "^4.21.0",
+    "vite": "^8.3.0"
+  },
+  "devDependencies": {
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.3.0",
+    "@types/node": "^22.14.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "autoprefixer": "^10.4.21",
+    "esbuild": "^0.28.2",
+    "gh-pages": "^6.3.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2"
+  }
+}
